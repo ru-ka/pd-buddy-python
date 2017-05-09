@@ -17,7 +17,7 @@ class Sink:
         Parameters:
             sp: A serial.tools.list_ports.ListPortInfo object
         """
-        self.port = serial.Serial(sp.device, baudrate=115200, timeout=0.01)
+        self.port = serial.Serial(sp.device, baudrate=115200)
 
     def send_command(self, cmd):
         """Send a command to the PD Buddy Sink, returning the result
@@ -30,11 +30,14 @@ class Sink:
             as a response to the command.
         """
         # Send the command
-        self.port.write(bytes(cmd, 'utf-8') + b'\r\n')
+        self.port.write(bytes(cmd, "utf-8") + b"\r\n")
         self.port.flush()
 
         # Read the result
-        answer = self.port.readlines()
+        answer = b""
+        while not answer.endswith(b"PDBS) "):
+            answer += self.port.read(1)
+        answer = answer.split(b"\r\n")
 
         # Remove the echoed command and prompt
         answer = answer[1:-1]
