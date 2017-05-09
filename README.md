@@ -18,6 +18,11 @@ Interface
     >>> pdbs = pdbuddy.Sink(list(pdbuddy.Sink.get_devices())[0])
     >>> pdbs.get_cfg()
     SinkConfig(status=SinkStatus.VALID, flags=SinkFlags.NONE, v=5000, i=3000)
+    >>> print(pdbs.get_cfg())
+    status: valid
+    flags: (none)
+    v: 5.00 V
+    i: 3.00 A
 
 ### Locally manipulate a SinkConfig object
 
