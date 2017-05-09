@@ -183,6 +183,38 @@ class SinkConfig:
 
         return s
 
+    def __str__(self):
+        """Print the SinkStatus in the manner of the configuration shell"""
+        s = ""
+
+        if self.status is not None:
+            s += "status: "
+            if self.status is SinkStatus.EMPTY:
+                s += "empty"
+            elif self.status is SinkStatus.VALID:
+                s += "valid"
+            elif self.status is SinkStatus.INVALID:
+                s += "invalid"
+            s += "\n"
+
+        if self.flags is not None:
+            s += "flags: "
+            if self.flags is SinkFlags.NONE:
+                s += "(none)"
+            else:
+                if self.flags & SinkFlags.GIVEBACK:
+                    s += "GiveBack"
+            s += "\n"
+
+        if self.v is not None:
+            s += "v: {:.2f} V\n".format(self.v / 1000)
+
+        if self.i is not None:
+            s += "i: {:.2f} A\n".format(self.i / 1000)
+
+        # Return all but the last character of s to remove the trailing newline
+        return s[:-1]
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             if other.status is not self.status:
