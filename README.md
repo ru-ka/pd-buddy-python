@@ -37,5 +37,5 @@ Interface
 
 ## Requirements
 
-* Python >= 3.4 should work (tested with 3.6)
+* Python >= 3.6
 * pySerial (tested with 3.3)
