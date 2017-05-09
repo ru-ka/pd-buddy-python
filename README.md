@@ -43,4 +43,4 @@ Interface
 ## Requirements
 
 * Python >= 3.6
-* pySerial (tested with 3.3)
+* pySerial >= 3.0
