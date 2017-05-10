@@ -5,6 +5,85 @@ import unittest
 import pdbuddy
 
 
+class SinkTestCase(unittest.TestCase):
+
+    def setUp(self):
+        # Get devices
+        pdbs_devices = list(pdbuddy.Sink.get_devices())
+        # If there are no devices, skip the test
+        if len(pdbs_devices) == 0:
+            self.skipTest("No PD Buddy Sink devices found")
+        # Open the first device
+        self.pdbs = pdbuddy.Sink(pdbs_devices[0])
+
+        self.obj_valid = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.NONE, v=15000, i=3000)
+        self.obj_valid_gb = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, i=3000)
+
+    def tearDown(self):
+        # Close the connection to the PD Buddy Sink
+        self.pdbs.close()
+
+    def test_identify(self):
+        self.pdbs.identify()
+
+    def test_help(self):
+        help_text = self.pdbs.help()
+        self.assertTrue(len(help_text) > 0)
+        self.assertTrue(len(help_text[0]) > 0)
+
+    def test_license(self):
+        license_text = self.pdbs.license()
+        self.assertTrue(len(license_text) > 0)
+        self.assertTrue(len(license_text[0]) > 0)
+
+    def test_set_tmpcfg_valid(self):
+        self.pdbs.set_tmpcfg(self.obj_valid)
+        self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_valid)
+
+    def test_set_tmpcfg_valid_gb(self):
+        self.pdbs.set_tmpcfg(self.obj_valid_gb)
+        self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_valid_gb)
+
+    def test_write(self):
+        self.test_set_tmpcfg_valid()
+        self.pdbs.write()
+        self.assertEqual(self.pdbs.get_cfg(), self.obj_valid)
+
+    def test_get_cfg_index(self):
+        self.assertIsInstance(self.pdbs.get_cfg(0), pdbuddy.SinkConfig)
+
+    def test_get_cfg_index_bad(self):
+        with self.assertRaises(IndexError):
+            self.pdbs.get_cfg(-1)
+
+    def test_load(self):
+        # Write obj_valid to flash
+        self.test_write()
+        # Write obj_valid_gb to tmpcfg
+        self.test_set_tmpcfg_valid_gb()
+
+        self.assertNotEqual(self.pdbs.get_cfg(), self.pdbs.get_tmpcfg())
+
+        # Load flash to tmpcfg
+        self.pdbs.load()
+
+        self.assertEqual(self.pdbs.get_cfg(), self.pdbs.get_tmpcfg())
+
+    def test_erase(self):
+        self.pdbs.erase()
+        with self.assertRaises(KeyError):
+            self.pdbs.load()
+
+    def test_context_manager(self):
+        self.pdbs.close()
+        with pdbuddy.Sink(list(pdbuddy.Sink.get_devices())[0]) as pdbs:
+            # Test something with the conext manager.  For example, this is
+            # essentially test_get_cfg_index.
+            self.assertIsInstance(pdbs.get_cfg(0), pdbuddy.SinkConfig)
+
+
 class SinkConfigTestCase(unittest.TestCase):
 
     def setUp(self):
