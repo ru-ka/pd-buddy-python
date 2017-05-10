@@ -29,6 +29,11 @@ class Sink:
         except ValueError:
             self._port = serial.Serial(sp.device, baudrate=115200)
 
+        # Put communications in a known state, cancelling any partially-entered
+        # command that may be sitting in the buffer.
+        self._port.write("\x04".encode("utf-8"))
+        self._port.flush()
+
     def __enter__(self):
         return self
 
