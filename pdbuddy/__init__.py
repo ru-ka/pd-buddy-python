@@ -1,6 +1,13 @@
 """Python bindings for PD Buddy Sink configuration"""
 
-from enum import *
+try:
+    # Try importing enum from the standard library
+    import enum
+    # Make sure Flag is available
+    enum.Flag
+except (ImportError, NameError):
+    # If something above failed, try aenum instead
+    import aenum as enum
 
 import serial
 import serial.tools.list_ports
@@ -38,7 +45,7 @@ class Sink:
             printed as a response to the command.
         """
         # Send the command
-        self._port.write(bytes(cmd, "utf-8") + b"\r\n")
+        self._port.write(cmd.encode("utf-8") + b"\r\n")
         self._port.flush()
 
         # Read the result
@@ -167,7 +174,7 @@ class SinkConfig:
         self.i = i
 
     def __repr__(self):
-        s = type(self).__name__ + "("
+        s = self.__class__.__name__ + "("
 
         if self.status is not None:
             s += "status={}".format(self.status)
@@ -301,14 +308,14 @@ class SinkConfig:
         return cls(status=status, flags=flags, v=v, i=i)
 
 
-class SinkStatus(Enum):
+class SinkStatus(enum.Enum):
     """Status field of a PD Buddy Sink configuration object"""
     EMPTY = 1
     VALID = 2
     INVALID = 3
 
 
-class SinkFlags(Flag):
+class SinkFlags(enum.Flag):
     """Flags field of a PD Buddy Sink configuration object"""
     NONE = 0
-    GIVEBACK = auto()
+    GIVEBACK = enum.auto()

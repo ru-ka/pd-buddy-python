@@ -55,5 +55,6 @@ Write the SinkConfig object to flash
 Requirements
 ------------
 
--  Python >= 3.6
+-  Python 2.7, 3.6
 -  pySerial >= 3.0
+-  aenum >= 2.0 (if using Python < 3.6)
