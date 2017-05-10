@@ -68,4 +68,5 @@ To run the unit tests, run::
 
 This will test the Sink class only if a PD Buddy Sink is plugged in and in
 setup mode, so make sure that's the case if you're testing any changes to the
-Sink class.
+Sink class.  Also, make sure the Status LED is blinking quickly when the tests
+are run, since that's the only real way to test the ``identify`` command.
