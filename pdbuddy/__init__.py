@@ -31,8 +31,7 @@ class Sink:
 
         # Put communications in a known state, cancelling any partially-entered
         # command that may be sitting in the buffer.
-        self._port.write("\x04".encode("utf-8"))
-        self._port.flush()
+        self.send_command("\x04", newline=False)
 
     def __enter__(self):
         return self
@@ -40,17 +39,24 @@ class Sink:
     def __exit__(self, exc_type, exc_value, traceback):
         self._port.close()
 
-    def send_command(self, cmd):
+    def send_command(self, cmd, newline=True):
         """Send a command to the PD Buddy Sink, returning the result
         
         :param cmd: the text to send to the Sink
-        :type sp: str
+        :param newline: whether to append a ``\r\n`` to the command
+        :type cmd: str
+        :type newline: bool
         
         :returns: a list of zero or more bytes objects, each being one line
             printed as a response to the command.
         """
+        # Build the command
+        cmd = cmd.encode("utf-8")
+        if newline:
+            cmd += b"\r\n"
+
         # Send the command
-        self._port.write(cmd.encode("utf-8") + b"\r\n")
+        self._port.write(cmd)
         self._port.flush()
 
         # Read the result
