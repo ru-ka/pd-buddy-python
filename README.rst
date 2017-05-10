@@ -55,6 +55,17 @@ Write the SinkConfig object to flash
 Requirements
 ------------
 
--  Python 2.7, 3.6
+-  Python 2.7, >= 3.3
 -  pySerial >= 3.0
 -  aenum >= 2.0 (if using Python < 3.6)
+
+Testing
+-------
+
+To run the unit tests, run::
+
+    $ python setup.py test
+
+This will test the Sink class only if a PD Buddy Sink is plugged in and in
+setup mode, so make sure that's the case if you're testing any changes to the
+Sink class.
