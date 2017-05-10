@@ -221,7 +221,10 @@ class SinkConfig:
             s += "i: {:.2f} A\n".format(self.i / 1000)
 
         # Return all but the last character of s to remove the trailing newline
-        return s[:-1]
+        if s:
+            return s[:-1]
+        else:
+            return "No configuration"
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
