@@ -12,22 +12,21 @@ class Sink:
     pid = 0x0001
 
     def __init__(self, sp):
-        """Open the serial port to communicate with the PD Buddy Sink
+        """Open a serial port to communicate with the PD Buddy Sink
         
-        Parameters:
-            sp: A serial.tools.list_ports.ListPortInfo object
+        :param sp: the serial port of the device
+        :type sp: str or `serial.tools.list_ports.ListPortInfo`
         """
         self.port = serial.Serial(sp.device, baudrate=115200)
 
     def send_command(self, cmd):
         """Send a command to the PD Buddy Sink, returning the result
         
-        Parameters:
-            cmd: A string containing the text to send to the Sink
+        :param cmd: the text to send to the Sink
+        :type sp: str
         
-        Returns:
-            A list of zero or more bytes objects, each being one line printed
-            as a response to the command.
+        :returns: a list of zero or more bytes objects, each being one line
+            printed as a response to the command.
         """
         # Send the command
         self.port.write(bytes(cmd, "utf-8") + b"\r\n")
@@ -62,7 +61,7 @@ class Sink:
     def load(self):
         """Loads the current configuration from flash into the buffer
         
-        Raises KeyError if there is no configuration in flash.
+        :raises: KeyError
         """
         text = self.send_command("load")
         if len(text) > 0 and text[0].startswith(b"No configuration"):
@@ -71,11 +70,9 @@ class Sink:
     def get_cfg(self, index=None):
         """Reads configuration from flash
          
-        Parameters:
-            index: Optional index of configuration object in flash to read
+        :param index: optional index of configuration object in flash to read
 
-        Returns:
-            A SinkConfig object
+        :returns: a `SinkConfig` object
         """
         if index is None:
             cfg = self.send_command("get_cfg")
@@ -87,8 +84,7 @@ class Sink:
     def get_tmpcfg(self):
         """Reads the contents of the configuration buffer
 
-        Returns:
-            A SinkConfig object
+        :returns: a `SinkConfig` object
         """
         cfg = self.send_command("get_tmpcfg")
 
@@ -118,7 +114,7 @@ class Sink:
         """Writes a SinkConfig object to the device's configuration buffer
         
         Note: the value of the status field is ignored; it will always be
-        SinkStatus.VALID.
+        `SinkStatus.VALID`.
         """
         # Set flags
         self.clear_flags()
@@ -135,7 +131,7 @@ class Sink:
     def get_devices(cls):
         """Get an iterable of PD Buddy Sink devices
         
-        Returns an iterable of serial.tools.list_ports.ListPortInfo objects.
+        :returns: an iterable of `serial.tools.list_ports.ListPortInfo` objects
         """
         return serial.tools.list_ports.grep("{:04X}:{:04X}".format(cls.vid,
             cls.pid))
@@ -147,11 +143,10 @@ class SinkConfig:
     def __init__(self, status=None, flags=None, v=None, i=None):
         """Create a SinkConfig object
         
-        Parameters:
-            status: A SinkStatus value
-            flags: Zero or more SinkFlags values
-            v: Voltage in millivolts
-            i: Current in milliamperes
+        :param status: A `SinkStatus` value
+        :param flags: Zero or more `SinkFlags` values
+        :param v: Voltage in millivolts
+        :param i: Current in milliamperes
         """
         self.status = status
         self.flags = flags
@@ -240,9 +235,9 @@ class SinkConfig:
     def from_text(cls, text):
         """Creates a SinkConfig from text returned by Sink.send_command
         
-        Returns a new SinkConfig object.
+        :returns: a new `SinkConfig` object.
 
-        Raises IndexError if the configuration reads "Invalid index".
+        :raises: IndexError
         """
         # Assume the parameters will all be None
         status = None
