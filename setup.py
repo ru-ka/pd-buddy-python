@@ -31,4 +31,5 @@ setup(
         "pyserial>=3,<4",
         "aenum>=2;python_version<'3.6'"
     ],
+    test_suite="test_pdbuddy"
 )
