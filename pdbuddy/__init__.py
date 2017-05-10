@@ -17,7 +17,16 @@ class Sink:
         :param sp: the serial port of the device
         :type sp: str or `serial.tools.list_ports.ListPortInfo`
         """
-        self.port = serial.Serial(sp.device, baudrate=115200)
+        try:
+            self._port = serial.Serial(sp, baudrate=115200)
+        except ValueError:
+            self._port = serial.Serial(sp.device, baudrate=115200)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._port.close()
 
     def send_command(self, cmd):
         """Send a command to the PD Buddy Sink, returning the result
@@ -29,18 +38,22 @@ class Sink:
             printed as a response to the command.
         """
         # Send the command
-        self.port.write(bytes(cmd, "utf-8") + b"\r\n")
-        self.port.flush()
+        self._port.write(bytes(cmd, "utf-8") + b"\r\n")
+        self._port.flush()
 
         # Read the result
         answer = b""
         while not answer.endswith(b"PDBS) "):
-            answer += self.port.read(1)
+            answer += self._port.read(1)
         answer = answer.split(b"\r\n")
 
         # Remove the echoed command and prompt
         answer = answer[1:-1]
         return answer
+
+    def close(self):
+        """Close the serial port"""
+        self._port.close()
 
     def help(self):
         """Returns the help text from the PD Buddy Sink"""
