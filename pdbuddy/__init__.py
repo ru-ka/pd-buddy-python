@@ -268,7 +268,9 @@ class SinkConfig:
     @classmethod
     def from_text(cls, text):
         """Creates a SinkConfig from text returned by Sink.send_command
-        
+
+        :param text: the text to load
+        :type text: a list of bytes objects
         :returns: a new `SinkConfig` object.
 
         :raises: IndexError
