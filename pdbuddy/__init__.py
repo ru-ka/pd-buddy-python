@@ -16,7 +16,7 @@ import serial.tools.list_ports
 class Sink:
     """Interface for configuring a PD Buddy Sink"""
     vid = 0x1209
-    pid = 0x0001
+    pid = 0x9DB5
 
     def __init__(self, sp):
         """Open a serial port to communicate with the PD Buddy Sink
