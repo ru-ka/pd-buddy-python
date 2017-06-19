@@ -131,11 +131,19 @@ class Sink:
 
     def set_v(self, mv):
         """Sets the voltage of the configuration buffer, in millivolts"""
-        self.send_command("set_v {}".format(mv))
+        out = self.send_command("set_v {}".format(mv))
+        # If that command gave any output, that indicates an error.  Raise an
+        # exception to make that clear.
+        if len(out):
+            raise ValueError(out[0])
 
     def set_i(self, ma):
         """Sets the current of the configuration buffer, in milliamperes"""
-        self.send_command("set_i {}".format(ma))
+        out = self.send_command("set_i {}".format(ma))
+        # If that command gave any output, that indicates an error.  Raise an
+        # exception to make that clear.
+        if len(out):
+            raise ValueError(out[0])
 
     def identify(self):
         """Blinks the LED quickly"""
