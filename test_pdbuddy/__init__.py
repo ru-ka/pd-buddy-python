@@ -21,11 +21,11 @@ class SinkTestCase(unittest.TestCase):
         self.obj_valid_gb = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, i=3000)
         self.obj_huge_vi = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=70000, i=70000)
+                flags=pdbuddy.SinkFlags.NONE, v=65536, i=65536)
         self.obj_big_vi = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=50000, i=50000)
+                flags=pdbuddy.SinkFlags.NONE, v=20001, i=5001)
         self.obj_neg_vi = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=-5000, i=-1000)
+                flags=pdbuddy.SinkFlags.NONE, v=-1, i=-1)
 
     def tearDown(self):
         # Close the connection to the PD Buddy Sink
