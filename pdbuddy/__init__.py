@@ -152,8 +152,8 @@ class Sink:
     def output(self, state=None):
         """Gets or sets the state of a Sink's output
 
-        If an invalid output is read, raises ValueError.  This may indicate
-        that the firmware does not support the ``output`` command.
+        Raises KeyError if the ``output`` command is not available on the Sink.
+        Raises ValueError if an invalid output is read.
 
         :param state: optional value of the output to set
 
@@ -167,6 +167,9 @@ class Sink:
             elif value[0] == b"disabled":
                 return False
             else:
+                # If the command is unknown to the Sink, raise a KeyError
+                if value[0] == b"output ?":
+                    raise KeyError("command not found")
                 # If unexpected text is returned, raise an exception indicating a
                 # firmware error
                 raise ValueError("unknown output state")
