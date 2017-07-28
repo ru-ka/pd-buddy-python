@@ -149,6 +149,35 @@ class Sink:
         """Blinks the LED quickly"""
         self.send_command("identify")
 
+    def output(self, state=None):
+        """Gets or sets the state of a Sink's output
+
+        If an invalid output is read, raises ValueError.  This may indicate
+        that the firmware does not support the ``output`` command.
+
+        :param state: optional value of the output to set
+
+        :returns: the output state if state is None, None otherwise
+        """
+        # With no parameter, return the output state
+        if state is None:
+            value = self.send_command("output")
+            if value[0] == b"enabled":
+                return True
+            elif value[0] == b"disabled":
+                return False
+            else:
+                # If unexpected text is returned, raise an exception indicating a
+                # firmware error
+                raise ValueError("unknown output state")
+
+        # With a parameter, set the output state
+        if state:
+            self.send_command("output enable")
+        else:
+            self.send_command("output disable")
+
+
     def set_tmpcfg(self, sc):
         """Writes a SinkConfig object to the device's configuration buffer
         
