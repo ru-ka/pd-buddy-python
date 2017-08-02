@@ -67,6 +67,11 @@ class Sink:
 
         # Remove the echoed command and prompt
         answer = answer[1:-1]
+
+        # Raise an exception if the command wasn't recognized
+        if len(answer) and answer[0] == cmd.strip().split()[0] + b" ?":
+            raise KeyError("command not found")
+
         return answer
 
     def close(self):
@@ -167,9 +172,6 @@ class Sink:
             elif value[0] == b"disabled":
                 return False
             else:
-                # If the command is unknown to the Sink, raise a KeyError
-                if value[0] == b"output ?":
-                    raise KeyError("command not found")
                 # If unexpected text is returned, raise an exception indicating a
                 # firmware error
                 raise ValueError("unknown output state")
