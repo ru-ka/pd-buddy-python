@@ -1,5 +1,7 @@
 """Python bindings for PD Buddy Sink configuration"""
 
+from collections import namedtuple
+
 try:
     # Try importing enum from the standard library
     import enum
@@ -210,46 +212,14 @@ class Sink:
             cls.pid))
 
 
-class SinkConfig:
-    """Python representation of a PD Buddy Sink configuration object"""
+class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
+    """Python representation of a PD Buddy Sink configuration object
 
-    def __init__(self, status=None, flags=None, v=None, i=None):
-        """Create a SinkConfig object
-        
-        :param status: A `SinkStatus` value
-        :param flags: Zero or more `SinkFlags` values
-        :param v: Voltage in millivolts
-        :param i: Current in milliamperes
-        """
-        self.status = status
-        self.flags = flags
-        self.v = v
-        self.i = i
-
-    def __repr__(self):
-        s = self.__class__.__name__ + "("
-
-        if self.status is not None:
-            s += "status={}".format(self.status)
-
-        if self.flags is not None:
-            if not s.endswith("("):
-                s += ", "
-            s += "flags={}".format(self.flags)
-
-        if self.v is not None:
-            if not s.endswith("("):
-                s += ", "
-            s += "v={}".format(self.v)
-
-        if self.i is not None:
-            if not s.endswith("("):
-                s += ", "
-            s += "i={}".format(self.i)
-
-        s += ")"
-
-        return s
+    ``status`` should be a `SinkStatus` object.  ``flags`` should be zero or
+    more `SinkFlags` values.  ``v`` is the voltage in millivolts, and ``i``
+    is the current in milliamperes.  `None` is also an acceptible value for
+    any of the fields."""
+    __slots__ = ()
 
     def __str__(self):
         """Print the SinkStatus in the manner of the configuration shell"""
@@ -286,27 +256,6 @@ class SinkConfig:
         else:
             return "No configuration"
 
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            if other.status is not self.status:
-                return False
-            if other.flags is not self.flags:
-                return False
-            if other.v != self.v:
-                return False
-            if other.i != self.i:
-                return False
-            return True
-        return NotImplemented
-
-    def __ne__(self, other):
-        if isinstance(other, self.__class__):
-            return not self.__eq__(other)
-        return NotImplemented
-
-    def __hash__(self):
-        return hash(tuple(sorted(self.__dict__.items())))
-
     @classmethod
     def from_text(cls, text):
         """Creates a SinkConfig from text returned by Sink.send_command
@@ -330,7 +279,7 @@ class SinkConfig:
                 raise IndexError("configuration index out of range")
             # If there is no configuration, return an empty SinkConfig
             elif line.startswith(b"No configuration"):
-                return cls()
+                return cls(None, None, None, None)
             # If this line is the status field
             elif line.startswith(b"status: "):
                 line = line.split()[1:]

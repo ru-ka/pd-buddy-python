@@ -117,8 +117,10 @@ class SinkTestCase(unittest.TestCase):
 class SinkConfigTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.obj_none = pdbuddy.SinkConfig()
-        self.obj_empty = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.EMPTY)
+        self.obj_none = pdbuddy.SinkConfig(status=None, flags=None, v=None,
+                i=None)
+        self.obj_empty = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.EMPTY,
+                flags=None, v=None, i=None)
         self.obj_valid = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=15000, i=3000)
         self.obj_invalid = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.INVALID,
@@ -157,11 +159,12 @@ class SinkConfigTestCase(unittest.TestCase):
                 "status: valid\nflags: (none)\nv: 15.00 V\ni: 1.00 A")
 
     def test_eq_none(self):
-        self.assertTrue(self.obj_none == pdbuddy.SinkConfig())
+        self.assertTrue(self.obj_none == pdbuddy.SinkConfig(None, None, None,
+            None))
 
     def test_eq_valid(self):
         # Set invalid object as valid
-        self.obj_invalid.status = pdbuddy.SinkStatus.VALID
+        self.obj_invalid = self.obj_invalid._replace(status=pdbuddy.SinkStatus.VALID)
 
         self.assertTrue(self.obj_valid == self.obj_invalid)
 
@@ -181,11 +184,12 @@ class SinkConfigTestCase(unittest.TestCase):
         self.assertFalse(self.obj_valid == self.obj_valid_1a)
 
     def test_ne_none(self):
-        self.assertFalse(self.obj_none != pdbuddy.SinkConfig())
+        self.assertFalse(self.obj_none != pdbuddy.SinkConfig(None, None, None,
+            None))
 
     def test_ne_valid(self):
         # Set invalid object as valid
-        self.obj_invalid.status = pdbuddy.SinkStatus.VALID
+        self.obj_invalid = self.obj_invalid._replace(status=pdbuddy.SinkStatus.VALID)
 
         self.assertFalse(self.obj_valid != self.obj_invalid)
 
@@ -196,7 +200,8 @@ class SinkConfigTestCase(unittest.TestCase):
         self.assertTrue(self.obj_valid != self.obj_invalid)
 
     def test_hash_identical(self):
-        self.assertEqual(hash(self.obj_none), hash(pdbuddy.SinkConfig()))
+        self.assertEqual(hash(self.obj_none), hash(pdbuddy.SinkConfig(None,
+            None, None, None)))
 
     def test_hash_different(self):
         self.assertNotEqual(hash(self.obj_none), hash(self.obj_valid))
