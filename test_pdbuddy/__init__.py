@@ -103,11 +103,11 @@ class SinkTestCase(unittest.TestCase):
 
     def test_output(self):
         try:
-            self.pdbs.output(False)
-            self.assertFalse(self.pdbs.output())
+            self.pdbs.output = False
+            self.assertFalse(self.pdbs.output)
 
-            self.pdbs.output(True)
-            self.assertTrue(self.pdbs.output())
+            self.pdbs.output = True
+            self.assertTrue(self.pdbs.output)
         except KeyError:
             self.skipTest("Command output not supported")
         except ValueError:

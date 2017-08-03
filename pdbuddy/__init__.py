@@ -156,29 +156,25 @@ class Sink:
         """Blinks the LED quickly"""
         self.send_command("identify")
 
-    def output(self, state=None):
-        """Gets or sets the state of a Sink's output
+    @property
+    def output(self):
+        """The state of the Sink's output
 
         Raises KeyError if the ``output`` command is not available on the Sink.
         Raises ValueError if an invalid output is read.
-
-        :param state: optional value of the output to set
-
-        :returns: the output state if state is None, None otherwise
         """
-        # With no parameter, return the output state
-        if state is None:
-            value = self.send_command("output")
-            if value[0] == b"enabled":
-                return True
-            elif value[0] == b"disabled":
-                return False
-            else:
-                # If unexpected text is returned, raise an exception indicating a
-                # firmware error
-                raise ValueError("unknown output state")
+        value = self.send_command("output")
+        if value[0] == b"enabled":
+            return True
+        elif value[0] == b"disabled":
+            return False
+        else:
+            # If unexpected text is returned, raise an exception indicating a
+            # firmware error
+            raise ValueError("unknown output state")
 
-        # With a parameter, set the output state
+    @output.setter
+    def output(self, state):
         if state:
             self.send_command("output enable")
         else:
@@ -218,7 +214,8 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
     ``status`` should be a `SinkStatus` object.  ``flags`` should be zero or
     more `SinkFlags` values.  ``v`` is the voltage in millivolts, and ``i``
     is the current in milliamperes.  `None` is also an acceptible value for
-    any of the fields."""
+    any of the fields.
+    """
     __slots__ = ()
 
     def __str__(self):

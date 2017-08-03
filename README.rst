@@ -11,6 +11,7 @@ Features
 -  Configuration is represented as a SinkConfig object
 -  SinkConfig objects can be manipulated locally and written to the
    device with one method call
+-  Allows control of whether or not the output is enabled
 
 Examples
 --------
@@ -23,7 +24,7 @@ Open the first PD Buddy Sink device and read its configuration
     >>> import pdbuddy
     >>> pdbs = pdbuddy.Sink(list(pdbuddy.Sink.get_devices())[0])
     >>> pdbs.get_cfg()
-    SinkConfig(status=SinkStatus.VALID, flags=SinkFlags.NONE, v=5000, i=3000)
+    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.NONE: 0>, v=5000, i=3000)
     >>> print(pdbs.get_cfg())
     status: valid
     flags: (none)
@@ -36,11 +37,10 @@ Locally manipulate a SinkConfig object
 ::
 
     >>> cfg = pdbs.get_cfg()
-    >>> cfg.v = 20000
-    >>> cfg.i = 2250
-    >>> cfg.flags |= pdbuddy.SinkFlags.GIVEBACK
+    >>> cfg = cfg._replace(v=20000, i=2250)
+    >>> cfg = cfg._replace(flags=cfg.flags | pdbuddy.SinkFlags.GIVEBACK)
     >>> cfg
-    SinkConfig(status=SinkStatus.VALID, flags=SinkFlags.GIVEBACK, v=20000, i=2250)
+    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.GIVEBACK: 1>, v=20000, i=2250)
 
 Write the SinkConfig object to flash
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,7 +50,7 @@ Write the SinkConfig object to flash
     >>> pdbs.set_tmpcfg(cfg)
     >>> pdbs.write()
     >>> pdbs.get_cfg()
-    SinkConfig(status=SinkStatus.VALID, flags=SinkFlags.GIVEBACK, v=20000, i=2250)
+    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.GIVEBACK: 1>, v=20000, i=2250)
 
 Requirements
 ------------
