@@ -7,7 +7,7 @@ try:
     import enum
     # Make sure Flag is available
     enum.Flag
-except (ImportError, NameError):
+except (ImportError, NameError, AttributeError):
     # If something above failed, try aenum instead
     import aenum as enum
 
@@ -245,10 +245,10 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
             s += "\n"
 
         if self.v is not None:
-            s += "v: {:.2f} V\n".format(self.v / 1000)
+            s += "v: {:.2f} V\n".format(self.v / 1000.0)
 
         if self.i is not None:
-            s += "i: {:.2f} A\n".format(self.i / 1000)
+            s += "i: {:.2f} A\n".format(self.i / 1000.0)
 
         # Return all but the last character of s to remove the trailing newline
         if s:
@@ -375,8 +375,8 @@ class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
         if self.peak_i:
             s += "\tpeak_i: {}\n".format(self.peak_i)
 
-        s += "\tv: {:.2f} V\n".format(self.v / 1000)
-        s += "\ti: {:.2f} A".format(self.i / 1000)
+        s += "\tv: {:.2f} V\n".format(self.v / 1000.0)
+        s += "\ti: {:.2f} A".format(self.i / 1000.0)
 
         return s
 
