@@ -240,3 +240,113 @@ class SinkConfigTestCase(unittest.TestCase):
                 b"v: 15.00 V",
                 b"i: 3.00 A"])
         self.assertEqual(ft_valid, self.obj_valid)
+
+
+class UnknownPDOTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.obj_zero = pdbuddy.UnknownPDO(value=0x00000000)
+        self.obj_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
+
+    def test_str_zero(self):
+        self.assertEqual(str(self.obj_zero), "00000000")
+
+    def test_str_notzero(self):
+        self.assertEqual(str(self.obj_notzero), "FFFFFFFF")
+
+
+class SrcFixedPDOTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.obj_everything = pdbuddy.SrcFixedPDO(True, True, True, True, True,
+                3, 20000, 5000)
+        self.obj_minimal = pdbuddy.SrcFixedPDO(False, False, False, False,
+                False, 0, 5000, 1500)
+
+    def test_str_everything(self):
+        self.assertEqual(str(self.obj_everything),
+                "fixed\n\tdual_role_pwr: 1\n\tusb_suspend: 1\n"
+                "\tunconstrained_pwr: 1\n\tusb_comms: 1\n\tdual_role_data: 1\n"
+                "\tpeak_i: 3\n\tv: 20.00 V\n\ti: 5.00 A")
+
+    def test_str_minimal(self):
+        self.assertEqual(str(self.obj_minimal),
+                "fixed\n\tv: 5.00 V\n\ti: 1.50 A")
+
+
+class ReadPDOTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.src_fixed_everything = pdbuddy.SrcFixedPDO(True, True, True, True,
+                True, 3, 20000, 5000)
+        self.src_fixed_minimal = pdbuddy.SrcFixedPDO(False, False, False,
+                False, False, 0, 5000, 1500)
+        self.unknown_zero = pdbuddy.UnknownPDO(value=0x00000000)
+        self.unknown_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
+
+    def test_read_src_fixed_everything(self):
+        rp_src_fixed_everything = pdbuddy.read_pdo([b"PDO 1: fixed",
+                b"\tdual_role_pwr: 1",
+                b"\tusb_suspend: 1",
+                b"\tunconstrained_pwr: 1",
+                b"\tusb_comms: 1",
+                b"\tdual_role_data: 1",
+                b"\tpeak_i: 3",
+                b"\tv: 20.00 V",
+                b"\ti: 5.00 A"])
+        self.assertEqual(self.src_fixed_everything, rp_src_fixed_everything)
+
+    def test_read_src_fixed_minimal(self):
+        rp_src_fixed_minimal = pdbuddy.read_pdo([b"PDO 1: fixed",
+                b"\tv: 5.00 V",
+                b"\ti: 1.50 A"])
+        self.assertEqual(self.src_fixed_minimal, rp_src_fixed_minimal)
+
+    def test_read_src_fixed_minimal_no_index(self):
+        rp_src_fixed_minimal = pdbuddy.read_pdo([b"fixed",
+                b"\tv: 5.00 V",
+                b"\ti: 1.50 A"])
+        self.assertEqual(self.src_fixed_minimal, rp_src_fixed_minimal)
+
+    def test_read_unknown_zero(self):
+        rp_unknown_zero = pdbuddy.read_pdo([b"PDO 1: 00000000"])
+        self.assertEqual(self.unknown_zero, rp_unknown_zero)
+
+    def test_read_unknown_notzero(self):
+        rp_unknown_notzero = pdbuddy.read_pdo([b"PDO 1: FFFFFFFF"])
+        self.assertEqual(self.unknown_notzero, rp_unknown_notzero)
+
+
+class ReadPDOListTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.src_fixed_everything = pdbuddy.SrcFixedPDO(True, True, True, True,
+                True, 3, 20000, 5000)
+        self.src_fixed_minimal = pdbuddy.SrcFixedPDO(False, False, False,
+                False, False, 0, 5000, 1500)
+        self.unknown_zero = pdbuddy.UnknownPDO(value=0x00000000)
+        self.unknown_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
+
+    def test_read_pdo_list(self):
+        # It's not a legal list for USB Power Delivery, but it works fine for
+        # testing this code
+        text = [b"PDO 1: fixed",
+                b"\tdual_role_pwr: 1",
+                b"\tusb_suspend: 1",
+                b"\tunconstrained_pwr: 1",
+                b"\tusb_comms: 1",
+                b"\tdual_role_data: 1",
+                b"\tpeak_i: 3",
+                b"\tv: 20.00 V",
+                b"\ti: 5.00 A",
+                b"PDO 2: fixed",
+                b"\tv: 5.00 V",
+                b"\ti: 1.50 A",
+                b"PDO 3: 00000000",
+                b"PDO 4: FFFFFFFF"]
+        pdo_list = pdbuddy.read_pdo_list(text)
+
+        self.assertEqual(pdo_list[0], self.src_fixed_everything)
+        self.assertEqual(pdo_list[1], self.src_fixed_minimal)
+        self.assertEqual(pdo_list[2], self.unknown_zero)
+        self.assertEqual(pdo_list[3], self.unknown_notzero)

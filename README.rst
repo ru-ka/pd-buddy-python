@@ -12,6 +12,7 @@ Features
 -  SinkConfig objects can be manipulated locally and written to the
    device with one method call
 -  Allows control of whether or not the output is enabled
+-  Provides a Pythonic interface for reading advertised PDOs
 
 Examples
 --------

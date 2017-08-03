@@ -180,6 +180,9 @@ class Sink:
         else:
             self.send_command("output disable")
 
+    def get_source_cap(self):
+        """Gets the most recent Source_Capabilities read by the Sink"""
+        return read_pdo_list(self.send_command("get_source_cap"))
 
     def set_tmpcfg(self, sc):
         """Writes a SinkConfig object to the device's configuration buffer
@@ -320,3 +323,128 @@ class SinkFlags(enum.Flag):
     """Flags field of a PD Buddy Sink configuration object"""
     NONE = 0
     GIVEBACK = enum.auto()
+
+
+class UnknownPDO(namedtuple("UnknownPDO", "value")):
+    """A PDO of an unknown type
+
+    ``value`` should be a 32-bit integer representing the PDO exactly as
+    transmitted.
+    """
+    __slots__ = ()
+
+    pdo_type = "unknown"
+
+    def __str__(self):
+        """Print the UnknownPDO in the manner of the configuration shell"""
+        return "{:08X}".format(self.value)
+
+
+class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
+        "unconstrained_pwr usb_comms dual_role_data peak_i v i")):
+    """A Source Fixed PDO
+
+    ``dual_role_pwr``, ``usb_suspend``, ``unconstrained_pwr``,
+    ``usb_comms``, and ``dual_role_data`` should be booleans.  ``peak_i``
+    should be an integer in the range [0, 3].  ``v`` is the voltage in
+    millivolts, and ``i`` is the maximum current in milliamperes.
+    """
+    __slots__ = ()
+
+    pdo_type = "fixed"
+
+    def __str__(self):
+        """Print the SrcFixedPDO in the manner of the configuration shell"""
+        s = self.pdo_type + "\n"
+
+        if self.dual_role_pwr:
+            s += "\tdual_role_pwr: 1\n"
+
+        if self.usb_suspend:
+            s += "\tusb_suspend: 1\n"
+
+        if self.unconstrained_pwr:
+            s += "\tunconstrained_pwr: 1\n"
+
+        if self.usb_comms:
+            s += "\tusb_comms: 1\n"
+
+        if self.dual_role_data:
+            s += "\tdual_role_data: 1\n"
+
+        if self.peak_i:
+            s += "\tpeak_i: {}\n".format(self.peak_i)
+
+        s += "\tv: {:.2f} V\n".format(self.v / 1000)
+        s += "\ti: {:.2f} A".format(self.i / 1000)
+
+        return s
+
+
+def read_pdo(text):
+    """Create a PDO object from partial text returned by Sink.send_command"""
+    # First, determine the PDO type
+    pdo_type = text[0].split(b":")[-1].strip().decode("utf-8")
+
+    if pdo_type == SrcFixedPDO.pdo_type:
+        # Set default values (n.b. there are none for v and i)
+        dual_role_pwr = False
+        usb_suspend = False
+        unconstrained_pwr = False
+        usb_comms = False
+        dual_role_data = False
+        peak_i = 0
+
+        # Load a SrcFixedPDO
+        for line in text[1:]:
+            fields = line.split(b":")
+            fields[0] = fields[0].strip()
+            fields[1] = fields[1].strip()
+            if fields[0] == b"dual_role_pwr":
+                dual_role_pwr = (fields[1] == b"1")
+            elif fields[0] == b"usb_suspend":
+                usb_suspend = (fields[1] == b"1")
+            elif fields[0] == b"unconstrained_pwr":
+                unconstrained_pwr = (fields[1] == b"1")
+            elif fields[0] == b"usb_comms":
+                usb_comms = (fields[1] == b"1")
+            elif fields[0] == b"dual_role_data":
+                dual_role_data = (fields[1] == b"1")
+            elif fields[0] == b"peak_i":
+                peak_i = int(fields[1])
+            elif fields[0] == b"v":
+                v = round(1000*float(fields[1].split()[0]))
+            elif fields[0] == b"i":
+                i = round(1000*float(fields[1].split()[0]))
+
+        # Make the SrcFixedPDO
+        return SrcFixedPDO(
+                dual_role_pwr=dual_role_pwr,
+                usb_suspend=usb_suspend,
+                unconstrained_pwr=unconstrained_pwr,
+                usb_comms=usb_comms,
+                dual_role_data=dual_role_data,
+                peak_i=peak_i,
+                v=v,
+                i=i)
+    else:
+        # Make an UnknownPDO
+        return UnknownPDO(value=int(pdo_type, 16))
+
+
+def read_pdo_list(text):
+    """Create a list of PDOs from text returned by Sink.send_command"""
+    # Get the lines where PDOs start
+    pdo_start_list = []
+    for index, line in enumerate(text):
+        if not line.startswith(b"\t"):
+            pdo_start_list.append(index)
+    # Append the number of lines so the last slice will work right
+    pdo_start_list.append(len(text))
+
+    # Read the PDOs
+    pdo_list = []
+    for start, end in zip(pdo_start_list[:-1], pdo_start_list[1:]):
+        pdo_list.append(read_pdo(text[start:end]))
+
+    return pdo_list
