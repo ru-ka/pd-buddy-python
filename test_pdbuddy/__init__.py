@@ -182,54 +182,6 @@ class SinkConfigTestCase(unittest.TestCase):
         self.assertEqual(str(self.obj_valid_1a),
                 "status: valid\nflags: (none)\nv: 15.00 V\ni: 1.00 A")
 
-    def test_eq_none(self):
-        self.assertTrue(self.obj_none == pdbuddy.SinkConfig(None, None, None,
-            None))
-
-    def test_eq_valid(self):
-        # Set invalid object as valid
-        self.obj_invalid = self.obj_invalid._replace(status=pdbuddy.SinkStatus.VALID)
-
-        self.assertTrue(self.obj_valid == self.obj_invalid)
-
-    def test_eq_wrong_type(self):
-        self.assertFalse(self.obj_none == "hello world")
-
-    def test_eq_wrong_status(self):
-        self.assertFalse(self.obj_valid == self.obj_invalid)
-
-    def test_eq_wrong_flags(self):
-        self.assertFalse(self.obj_valid == self.obj_valid_gb)
-
-    def test_eq_wrong_voltage(self):
-        self.assertFalse(self.obj_valid == self.obj_valid_5v)
-
-    def test_eq_wrong_current(self):
-        self.assertFalse(self.obj_valid == self.obj_valid_1a)
-
-    def test_ne_none(self):
-        self.assertFalse(self.obj_none != pdbuddy.SinkConfig(None, None, None,
-            None))
-
-    def test_ne_valid(self):
-        # Set invalid object as valid
-        self.obj_invalid = self.obj_invalid._replace(status=pdbuddy.SinkStatus.VALID)
-
-        self.assertFalse(self.obj_valid != self.obj_invalid)
-
-    def test_ne_wrong_type(self):
-        self.assertTrue(self.obj_none != "hello world")
-
-    def test_ne_wrong_status(self):
-        self.assertTrue(self.obj_valid != self.obj_invalid)
-
-    def test_hash_identical(self):
-        self.assertEqual(hash(self.obj_none), hash(pdbuddy.SinkConfig(None,
-            None, None, None)))
-
-    def test_hash_different(self):
-        self.assertNotEqual(hash(self.obj_none), hash(self.obj_valid))
-
     def test_from_text_none(self):
         ft_none = pdbuddy.SinkConfig.from_text([])
         self.assertEqual(ft_none, self.obj_none)
