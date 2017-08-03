@@ -148,6 +148,14 @@ class SinkConfigTestCase(unittest.TestCase):
         self.assertEqual(str(self.obj_valid_gb),
                 "status: valid\nflags: GiveBack\nv: 15.00 V\ni: 3.00 A")
 
+    def test_str_valid_5v(self):
+        self.assertEqual(str(self.obj_valid_5v),
+                "status: valid\nflags: (none)\nv: 5.00 V\ni: 3.00 A")
+
+    def test_str_valid_1a(self):
+        self.assertEqual(str(self.obj_valid_1a),
+                "status: valid\nflags: (none)\nv: 15.00 V\ni: 1.00 A")
+
     def test_eq_none(self):
         self.assertTrue(self.obj_none == pdbuddy.SinkConfig())
 
