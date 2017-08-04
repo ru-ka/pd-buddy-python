@@ -427,6 +427,8 @@ def read_pdo(text):
                 peak_i=peak_i,
                 v=v,
                 i=i)
+    elif pdo_type == "No Source_Capabilities":
+        return None
     else:
         # Make an UnknownPDO
         return UnknownPDO(value=int(pdo_type, 16))
@@ -445,6 +447,8 @@ def read_pdo_list(text):
     # Read the PDOs
     pdo_list = []
     for start, end in zip(pdo_start_list[:-1], pdo_start_list[1:]):
-        pdo_list.append(read_pdo(text[start:end]))
+        pdo = read_pdo(text[start:end])
+        if pdo is not None:
+            pdo_list.append(pdo)
 
     return pdo_list

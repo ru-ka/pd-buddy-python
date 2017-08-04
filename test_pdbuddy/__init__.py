@@ -133,6 +133,9 @@ class SinkTestCase(unittest.TestCase):
         except ValueError:
             self.skipTest("Unknown value returned by PD Buddy Sink")
 
+    def test_get_source_cap(self):
+        self.assertIsInstance(self.pdbs.get_source_cap(), list)
+
     def test_send_command_invalid(self):
         with self.assertRaises(KeyError):
             self.pdbs.send_command("foo bar")

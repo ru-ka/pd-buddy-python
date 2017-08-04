@@ -5,7 +5,7 @@ with open("README.rst") as file:
 
 setup(
     name = "pd-buddy-python",
-    version = "0.3.0",
+    version = "0.3.1",
     author = "Clayton G. Hobbs",
     author_email = "clay@lakeserv.net",
     description = ("Python library for configuring PD Buddy Sink devices"),
