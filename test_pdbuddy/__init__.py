@@ -319,6 +319,10 @@ class ReadPDOTestCase(unittest.TestCase):
         rp_unknown_notzero = pdbuddy.read_pdo([b"PDO 1: FFFFFFFF"])
         self.assertEqual(self.unknown_notzero, rp_unknown_notzero)
 
+    def test_read_none(self):
+        none_pdo = pdbuddy.read_pdo([b"No Source_Capabilities"])
+        self.assertEqual(none_pdo, None)
+
 
 class ReadPDOListTestCase(unittest.TestCase):
 
@@ -353,3 +357,114 @@ class ReadPDOListTestCase(unittest.TestCase):
         self.assertEqual(pdo_list[1], self.src_fixed_minimal)
         self.assertEqual(pdo_list[2], self.unknown_zero)
         self.assertEqual(pdo_list[3], self.unknown_notzero)
+
+
+class PDOListCalculationsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.src_fixed_5v_1p5a = pdbuddy.SrcFixedPDO(False, False, True,
+                False, False, 0, 5000, 1500)
+        self.src_fixed_5v_3a = pdbuddy.SrcFixedPDO(False, False, True, False,
+                False, 0, 5000, 3000)
+        self.src_fixed_9v_1p6a = pdbuddy.SrcFixedPDO(False, False, False,
+                False, False, 0, 9000, 1600)
+        self.src_fixed_9v_3a = pdbuddy.SrcFixedPDO(False, False, False, False,
+                False, 0, 9000, 3000)
+        self.src_fixed_10v_1p5a = pdbuddy.SrcFixedPDO(False, False, False,
+                False, False, 0, 10000, 1500)
+        self.src_fixed_12v_5a = pdbuddy.SrcFixedPDO(False, False, False, False,
+                False, 0, 12000, 5000)
+        self.src_fixed_15v_1p8a = pdbuddy.SrcFixedPDO(False, False, False,
+                False, False, 0, 15000, 1800)
+        self.src_fixed_15v_3a = pdbuddy.SrcFixedPDO(False, False, False, False,
+                False, 0, 15000, 3000)
+        self.src_fixed_20v_2p25a = pdbuddy.SrcFixedPDO(False, False, False,
+                False, False, 0, 20000, 2250)
+        self.src_fixed_20v_5a = pdbuddy.SrcFixedPDO(False, False, False, False,
+                False, 0, 20000, 5000)
+
+    def test_calculate_pdp_15w(self):
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a]), 15)
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a,
+                self.src_fixed_9v_1p6a]), 15)
+
+    def test_calculate_pdp_27w(self):
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a]), 27)
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_1p8a]), 27)
+
+    def test_calculate_pdp_45w(self):
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a]), 45)
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_2p25a]), 45)
+
+    def test_calculate_pdp_100w(self):
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_5a]), 100)
+        self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_1p5a,
+                self.src_fixed_12v_5a, self.src_fixed_20v_5a]), 100)
+
+    def test_follows_power_rules_true(self):
+        # <= 15 W
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a]))
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a]))
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_1p6a]))
+        # <= 27 W
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a]))
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_1p8a]))
+        # <= 45 W
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a]))
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_2p25a]))
+        # <= 100 W
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_5a]))
+        self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_10v_1p5a,
+                self.src_fixed_12v_5a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_5a]))
+
+    def test_follows_power_rules_false(self):
+        # <= 15 W
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_10v_1p5a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a,
+            self.src_fixed_10v_1p5a]))
+        # <= 27 W
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_9v_3a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a,
+                self.src_fixed_9v_3a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_1p6a, self.src_fixed_15v_1p8a]))
+        # <= 45 W
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_20v_2p25a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_1p6a, self.src_fixed_15v_3a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_1p8a,
+                self.src_fixed_20v_2p25a]))
+        # <= 100 W
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_20v_5a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_5a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_1p6a, self.src_fixed_15v_3a,
+                self.src_fixed_20v_5a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_15v_1p8a,
+                self.src_fixed_20v_5a]))
+        self.assertFalse(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
+                self.src_fixed_9v_3a, self.src_fixed_12v_5a,
+                self.src_fixed_15v_3a, self.src_fixed_20v_2p25a]))

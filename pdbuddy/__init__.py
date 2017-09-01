@@ -452,3 +452,113 @@ def read_pdo_list(text):
             pdo_list.append(pdo)
 
     return pdo_list
+
+
+def calculate_pdp(pdo_list):
+    """Calculate the PDP in watts of a list of PDOs
+
+    The result is only guaranteed to be correct if the power supply follows
+    the USB Power Delivery standard.  Since quite a few power supplies
+    unfortunately do not, this can really only be considered an estimate.
+    """
+    max_power = 0
+
+    # The Source Power Rules make it so the PDP can be determined by the
+    # highest power available from any fixed supply PDO.
+    for pdo in pdo_list:
+        if pdo.pdo_type == "fixed":
+            max_power = max(max_power, pdo.v / 1000.0 * pdo.i / 1000.0)
+
+    return max_power
+
+
+def follows_power_rules(pdo_list):
+    """Test whether a list of PDOs follows the Power Rules for PD 2.0
+
+    This function is a false-biased approximation; that is, when it returns
+    False it is definitely correct, but when it returns True it might be
+    incorrect.
+    """
+    # First, estimate the PDP assuming the rules are being followed
+    pdp = calculate_pdp(pdo_list)
+
+    # Make sure nothing exceeds the PDP
+    for pdo in pdo_list:
+        if pdo.pdo_type == "fixed":
+            if pdp < pdo.v / 1000.0 * pdo.i / 1000.0:
+                return False
+        # TODO: in the future, there will be more types of PDO checked here
+
+    # Check that the fixed supply PDOs look right
+    seen_5v = False
+    seen_9v = False
+    seen_15v = False
+    seen_20v = False
+    seen_normative_voltages = False
+    if pdp <= 15:
+        # Below 15 W, make sure the PDP is available at 5 V.
+        for pdo in pdo_list:
+            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+                seen_5v = True
+                if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
+                    return False
+        seen_normative_voltages = seen_5v
+    elif pdp <= 27:
+        # Between 15 and 27 W, make sure at least 3 A is available at 5 V and
+        # the PDP is available at 9 V.
+        for pdo in pdo_list:
+            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+                seen_5v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.pdo_type == "fixed" and pdo.v == 9000:
+                seen_9v = True
+                if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
+                    return False
+        seen_normative_voltages = seen_5v and seen_9v
+    elif pdp <= 45:
+        # Between 27 and 45 W, make sure at least 3 A is available at 5 and
+        # 9 V, and the PDP is available at 15 V.
+        for pdo in pdo_list:
+            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+                seen_5v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.pdo_type == "fixed" and pdo.v == 9000:
+                seen_9v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.pdo_type == "fixed" and pdo.v == 15000:
+                seen_15v = True
+                if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
+                    return False
+        seen_normative_voltages = seen_5v and seen_9v and seen_15v
+    else:
+        # Above 45 W, make sure at least 3 A is available at 5, 9, and 15 V,
+        # and the PDP is available at 20 V.
+        for pdo in pdo_list:
+            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+                seen_5v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.pdo_type == "fixed" and pdo.v == 9000:
+                seen_9v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.pdo_type == "fixed" and pdo.v == 15000:
+                seen_15v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.pdo_type == "fixed" and pdo.v == 20000:
+                seen_20v = True
+                if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
+                    return False
+        seen_normative_voltages = seen_5v and seen_9v and seen_15v and seen_20v
+
+    if not seen_normative_voltages:
+        return False
+
+    # TODO: there are several things this currently doesn't test, such as
+    # variable and battery PDOs.
+
+    return True
