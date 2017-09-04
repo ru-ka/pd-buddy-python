@@ -495,7 +495,10 @@ def follows_power_rules(pdo_list):
     seen_15v = False
     seen_20v = False
     seen_normative_voltages = False
-    if pdp <= 15:
+    if pdp == 0:
+        # No power is fine
+        seen_normative_voltages = True
+    elif pdp <= 15:
         # Below 15 W, make sure the PDP is available at 5 V.
         for pdo in pdo_list:
             if pdo.pdo_type == "fixed" and pdo.v == 5000:

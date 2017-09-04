@@ -410,6 +410,7 @@ class PDOListCalculationsTestCase(unittest.TestCase):
 
     def test_follows_power_rules_true(self):
         # <= 15 W
+        self.assertTrue(pdbuddy.follows_power_rules([]))
         self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a]))
         self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a]))
         self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
