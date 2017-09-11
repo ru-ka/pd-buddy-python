@@ -381,6 +381,24 @@ class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
         return s
 
 
+class TypeCVirtualPDO(namedtuple("TypeCVirtualPDO", "i")):
+    """A Type-C Current Virtual PDO
+
+    ``i`` is the advertised current in milliamperes.
+    """
+    __slots__ = ()
+
+    pdo_type = "typec_virtual"
+
+    def __str__(self):
+        """Print the TypeCVirtualPDO in the manner of the configuration shell"""
+        s = self.pdo_type + "\n"
+
+        s += "\ti: {:.2f} A".format(self.i / 1000.0)
+
+        return s
+
+
 def read_pdo(text):
     """Create a PDO object from partial text returned by Sink.send_command"""
     # First, determine the PDO type
@@ -427,6 +445,17 @@ def read_pdo(text):
                 peak_i=peak_i,
                 v=v,
                 i=i)
+    elif pdo_type == TypeCVirtualPDO.pdo_type:
+        # Load a TypeCVirtualPDO
+        for line in text[1:]:
+            fields = line.split(b":")
+            fields[0] = fields[0].strip()
+            fields[1] = fields[1].strip()
+            if fields[0] == b"i":
+                i = round(1000*float(fields[1].split()[0]))
+
+        # Make the TypeCVirtualPDO
+        return TypeCVirtualPDO(i=i)
     elif pdo_type == "No Source_Capabilities":
         return None
     else:
@@ -468,6 +497,8 @@ def calculate_pdp(pdo_list):
     for pdo in pdo_list:
         if pdo.pdo_type == "fixed":
             max_power = max(max_power, pdo.v / 1000.0 * pdo.i / 1000.0)
+        elif pdo.pdo_type == "typec_virtual":
+            max_power = max(max_power, 5.0 * pdo.i / 1000.0)
 
     return max_power
 
@@ -481,6 +512,13 @@ def follows_power_rules(pdo_list):
     """
     # First, estimate the PDP assuming the rules are being followed
     pdp = calculate_pdp(pdo_list)
+
+    # If there's a typec_virtual PDO, there's no Power Delivery so the Power
+    # Rules cannot be violated.  In truth they're not really being followed
+    # either since they only apply to Power Delivery, but returning True here
+    # seems like the safer option.
+    if pdo_list and pdo_list[0].pdo_type == "typec_virtual":
+        return True
 
     # Make sure nothing exceeds the PDP
     for pdo in pdo_list:

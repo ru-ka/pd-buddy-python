@@ -277,6 +277,15 @@ class SrcFixedPDOTestCase(unittest.TestCase):
                 "fixed\n\tv: 5.00 V\n\ti: 1.50 A")
 
 
+class TypeCVirtualPDOTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.obj_1p5a = pdbuddy.TypeCVirtualPDO(1500)
+
+    def test_str_1p5a(self):
+        self.assertEqual(str(self.obj_1p5a), "typec_virtual\n\ti: 1.50 A")
+
+
 class ReadPDOTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -286,6 +295,7 @@ class ReadPDOTestCase(unittest.TestCase):
                 False, False, 0, 5000, 1500)
         self.unknown_zero = pdbuddy.UnknownPDO(value=0x00000000)
         self.unknown_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
+        self.typec_virtual = pdbuddy.TypeCVirtualPDO(1500)
 
     def test_read_src_fixed_everything(self):
         rp_src_fixed_everything = pdbuddy.read_pdo([b"PDO 1: fixed",
@@ -319,6 +329,11 @@ class ReadPDOTestCase(unittest.TestCase):
         rp_unknown_notzero = pdbuddy.read_pdo([b"PDO 1: FFFFFFFF"])
         self.assertEqual(self.unknown_notzero, rp_unknown_notzero)
 
+    def test_read_typec_virtual(self):
+        rp_typec_virtual = pdbuddy.read_pdo([b"PDO 5: typec_virtual",
+                b"\ti: 1.50 A"])
+        self.assertEqual(self.typec_virtual, rp_typec_virtual)
+
     def test_read_none(self):
         none_pdo = pdbuddy.read_pdo([b"No Source_Capabilities"])
         self.assertEqual(none_pdo, None)
@@ -333,6 +348,7 @@ class ReadPDOListTestCase(unittest.TestCase):
                 False, False, 0, 5000, 1500)
         self.unknown_zero = pdbuddy.UnknownPDO(value=0x00000000)
         self.unknown_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
+        self.typec_virtual = pdbuddy.TypeCVirtualPDO(1500)
 
     def test_read_pdo_list(self):
         # It's not a legal list for USB Power Delivery, but it works fine for
@@ -350,13 +366,16 @@ class ReadPDOListTestCase(unittest.TestCase):
                 b"\tv: 5.00 V",
                 b"\ti: 1.50 A",
                 b"PDO 3: 00000000",
-                b"PDO 4: FFFFFFFF"]
+                b"PDO 4: FFFFFFFF",
+                b"PDO 5: typec_virtual",
+                b"\ti: 1.50 A"]
         pdo_list = pdbuddy.read_pdo_list(text)
 
         self.assertEqual(pdo_list[0], self.src_fixed_everything)
         self.assertEqual(pdo_list[1], self.src_fixed_minimal)
         self.assertEqual(pdo_list[2], self.unknown_zero)
         self.assertEqual(pdo_list[3], self.unknown_notzero)
+        self.assertEqual(pdo_list[4], self.typec_virtual)
 
 
 class PDOListCalculationsTestCase(unittest.TestCase):
@@ -382,6 +401,10 @@ class PDOListCalculationsTestCase(unittest.TestCase):
                 False, False, 0, 20000, 2250)
         self.src_fixed_20v_5a = pdbuddy.SrcFixedPDO(False, False, False, False,
                 False, 0, 20000, 5000)
+        self.typec_virtual_1p5a = pdbuddy.TypeCVirtualPDO(1500)
+
+    def test_calculate_pdp_typec_virtual(self):
+        self.assertEqual(pdbuddy.calculate_pdp([self.typec_virtual_1p5a]), 7.5)
 
     def test_calculate_pdp_15w(self):
         self.assertEqual(pdbuddy.calculate_pdp([self.src_fixed_5v_3a]), 15)
@@ -411,6 +434,7 @@ class PDOListCalculationsTestCase(unittest.TestCase):
     def test_follows_power_rules_true(self):
         # <= 15 W
         self.assertTrue(pdbuddy.follows_power_rules([]))
+        self.assertTrue(pdbuddy.follows_power_rules([self.typec_virtual_1p5a]))
         self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_1p5a]))
         self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a]))
         self.assertTrue(pdbuddy.follows_power_rules([self.src_fixed_5v_3a,
