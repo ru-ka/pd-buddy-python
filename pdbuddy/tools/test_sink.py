@@ -42,10 +42,24 @@ def output_verify(sink):
 def main():
     # Make the argument parser
     parser = argparse.ArgumentParser(description='Test a PD Buddy Sink')
-    parser.add_argument('tty', metavar='tty', type=str, help="the Sink's tty")
+    parser.add_argument('tty', metavar='tty', type=str, nargs='?',
+            help="the Sink's tty")
+    parser.add_argument('-l', '--list-devices', action='store_true',
+            help='list connected PD Buddy Sinks and exit')
 
     # Parse arguments
     args = parser.parse_args()
+
+    # If asked to, list devices and exit
+    if args.list_devices:
+        for sinkinfo in pdbuddy.Sink.get_devices():
+            print(sinkinfo.device, '-', sinkinfo.manufacturer,
+                    sinkinfo.product, sinkinfo.serial_number)
+        sys.exit(0)
+
+    # If there's no device file specified, complain and exit
+    if not args.tty:
+        parser.error('the following arguments are required: tty')
 
     # Define configurations for testing
     cfg_20v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
