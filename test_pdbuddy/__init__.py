@@ -24,7 +24,7 @@ class SinkTestCase(unittest.TestCase):
         self.obj_huge_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=65536, i=1000)
         self.obj_big_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=20001, i=1000)
+                flags=pdbuddy.SinkFlags.NONE, v=21001, i=1000)
         self.obj_neg_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=-1, i=1000)
 
