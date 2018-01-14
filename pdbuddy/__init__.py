@@ -341,13 +341,15 @@ class UnknownPDO(namedtuple("UnknownPDO", "value")):
 
 
 class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
-        "unconstrained_pwr usb_comms dual_role_data peak_i v i")):
+        "unconstrained_pwr usb_comms dual_role_data unchunked_ext_msg peak_i "
+        "v i")):
     """A Source Fixed PDO
 
     ``dual_role_pwr``, ``usb_suspend``, ``unconstrained_pwr``,
-    ``usb_comms``, and ``dual_role_data`` should be booleans.  ``peak_i``
-    should be an integer in the range [0, 3].  ``v`` is the voltage in
-    millivolts, and ``i`` is the maximum current in milliamperes.
+    ``usb_comms``, ``dual_role_data``, and ``unchunked_ext_msg`` should be
+    booleans.  ``peak_i`` should be an integer in the range [0, 3].  ``v``
+    is the voltage in millivolts, and ``i`` is the maximum current in
+    milliamperes.
     """
     __slots__ = ()
 
@@ -371,6 +373,9 @@ class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
 
         if self.dual_role_data:
             s += "\tdual_role_data: 1\n"
+
+        if self.unchunked_ext_msg:
+            s += "\tunchunked_ext_msg: 1\n"
 
         if self.peak_i:
             s += "\tpeak_i: {}\n".format(self.peak_i)
@@ -411,6 +416,7 @@ def read_pdo(text):
         unconstrained_pwr = False
         usb_comms = False
         dual_role_data = False
+        unchunked_ext_msg = False
         peak_i = 0
 
         # Load a SrcFixedPDO
@@ -428,6 +434,8 @@ def read_pdo(text):
                 usb_comms = (fields[1] == b"1")
             elif fields[0] == b"dual_role_data":
                 dual_role_data = (fields[1] == b"1")
+            elif fields[0] == b"unchunked_ext_msg":
+                unchunked_ext_msg = (fields[1] == b"1")
             elif fields[0] == b"peak_i":
                 peak_i = int(fields[1])
             elif fields[0] == b"v":
@@ -442,6 +450,7 @@ def read_pdo(text):
                 unconstrained_pwr=unconstrained_pwr,
                 usb_comms=usb_comms,
                 dual_role_data=dual_role_data,
+                unchunked_ext_msg=unchunked_ext_msg,
                 peak_i=peak_i,
                 v=v,
                 i=i)

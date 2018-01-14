@@ -262,15 +262,16 @@ class SrcFixedPDOTestCase(unittest.TestCase):
 
     def setUp(self):
         self.obj_everything = pdbuddy.SrcFixedPDO(True, True, True, True, True,
-                3, 20000, 5000)
+                True, 3, 20000, 5000)
         self.obj_minimal = pdbuddy.SrcFixedPDO(False, False, False, False,
-                False, 0, 5000, 1500)
+                False, False, 0, 5000, 1500)
 
     def test_str_everything(self):
         self.assertEqual(str(self.obj_everything),
                 "fixed\n\tdual_role_pwr: 1\n\tusb_suspend: 1\n"
                 "\tunconstrained_pwr: 1\n\tusb_comms: 1\n\tdual_role_data: 1\n"
-                "\tpeak_i: 3\n\tv: 20.00 V\n\ti: 5.00 A")
+                "\tunchunked_ext_msg: 1\n\tpeak_i: 3\n\tv: 20.00 V\n"
+                "\ti: 5.00 A")
 
     def test_str_minimal(self):
         self.assertEqual(str(self.obj_minimal),
@@ -290,9 +291,9 @@ class ReadPDOTestCase(unittest.TestCase):
 
     def setUp(self):
         self.src_fixed_everything = pdbuddy.SrcFixedPDO(True, True, True, True,
-                True, 3, 20000, 5000)
+                True, True, 3, 20000, 5000)
         self.src_fixed_minimal = pdbuddy.SrcFixedPDO(False, False, False,
-                False, False, 0, 5000, 1500)
+                False, False, False, 0, 5000, 1500)
         self.unknown_zero = pdbuddy.UnknownPDO(value=0x00000000)
         self.unknown_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
         self.typec_virtual = pdbuddy.TypeCVirtualPDO(1500)
@@ -304,6 +305,7 @@ class ReadPDOTestCase(unittest.TestCase):
                 b"\tunconstrained_pwr: 1",
                 b"\tusb_comms: 1",
                 b"\tdual_role_data: 1",
+                b"\tunchunked_ext_msg: 1",
                 b"\tpeak_i: 3",
                 b"\tv: 20.00 V",
                 b"\ti: 5.00 A"])
@@ -343,9 +345,9 @@ class ReadPDOListTestCase(unittest.TestCase):
 
     def setUp(self):
         self.src_fixed_everything = pdbuddy.SrcFixedPDO(True, True, True, True,
-                True, 3, 20000, 5000)
+                True, True, 3, 20000, 5000)
         self.src_fixed_minimal = pdbuddy.SrcFixedPDO(False, False, False,
-                False, False, 0, 5000, 1500)
+                False, False, False, 0, 5000, 1500)
         self.unknown_zero = pdbuddy.UnknownPDO(value=0x00000000)
         self.unknown_notzero = pdbuddy.UnknownPDO(value=0xFFFFFFFF)
         self.typec_virtual = pdbuddy.TypeCVirtualPDO(1500)
@@ -359,6 +361,7 @@ class ReadPDOListTestCase(unittest.TestCase):
                 b"\tunconstrained_pwr: 1",
                 b"\tusb_comms: 1",
                 b"\tdual_role_data: 1",
+                b"\tunchunked_ext_msg: 1",
                 b"\tpeak_i: 3",
                 b"\tv: 20.00 V",
                 b"\ti: 5.00 A",
@@ -382,25 +385,25 @@ class PDOListCalculationsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.src_fixed_5v_1p5a = pdbuddy.SrcFixedPDO(False, False, True,
-                False, False, 0, 5000, 1500)
+                False, False, False, 0, 5000, 1500)
         self.src_fixed_5v_3a = pdbuddy.SrcFixedPDO(False, False, True, False,
-                False, 0, 5000, 3000)
+                False, False, 0, 5000, 3000)
         self.src_fixed_9v_1p6a = pdbuddy.SrcFixedPDO(False, False, False,
-                False, False, 0, 9000, 1600)
+                False, False, False, 0, 9000, 1600)
         self.src_fixed_9v_3a = pdbuddy.SrcFixedPDO(False, False, False, False,
-                False, 0, 9000, 3000)
+                False, False, 0, 9000, 3000)
         self.src_fixed_10v_1p5a = pdbuddy.SrcFixedPDO(False, False, False,
-                False, False, 0, 10000, 1500)
+                False, False, False, 0, 10000, 1500)
         self.src_fixed_12v_5a = pdbuddy.SrcFixedPDO(False, False, False, False,
-                False, 0, 12000, 5000)
+                False, False, 0, 12000, 5000)
         self.src_fixed_15v_1p8a = pdbuddy.SrcFixedPDO(False, False, False,
-                False, False, 0, 15000, 1800)
+                False, False, False, 0, 15000, 1800)
         self.src_fixed_15v_3a = pdbuddy.SrcFixedPDO(False, False, False, False,
-                False, 0, 15000, 3000)
+                False, False, 0, 15000, 3000)
         self.src_fixed_20v_2p25a = pdbuddy.SrcFixedPDO(False, False, False,
-                False, False, 0, 20000, 2250)
+                False, False, False, 0, 20000, 2250)
         self.src_fixed_20v_5a = pdbuddy.SrcFixedPDO(False, False, False, False,
-                False, 0, 20000, 5000)
+                False, False, 0, 20000, 5000)
         self.typec_virtual_1p5a = pdbuddy.TypeCVirtualPDO(1500)
 
     def test_calculate_pdp_typec_virtual(self):
