@@ -217,13 +217,13 @@ class Sink:
             cls.pid))
 
 
-class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
+class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i")):
     """Python representation of a PD Buddy Sink configuration object
 
     ``status`` should be a `SinkStatus` object.  ``flags`` should be zero or
-    more `SinkFlags` values.  ``v`` is the voltage in millivolts, and ``i``
-    is the current in milliamperes.  `None` is also an acceptible value for
-    any of the fields.
+    more `SinkFlags` values.  ``v``, ``vmin``, and ``vmax`` are voltages in
+    millivolts, and ``i`` is the current in milliamperes.  `None` is also an
+    acceptible value for any of the fields.
     """
     __slots__ = ()
 
@@ -248,10 +248,18 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
             else:
                 if self.flags & SinkFlags.GIVEBACK:
                     s += "GiveBack"
+                if self.flags & SinkFlags.HV_PREFERRED:
+                    s += "HV_Preferred"
             s += "\n"
 
         if self.v is not None:
-            s += "v: {:.2f} V\n".format(self.v / 1000.0)
+            s += "v: {:.3f} V\n".format(self.v / 1000.0)
+
+        if self.vmin is not None:
+            s += "vmin: {:.3f} V\n".format(self.vmin / 1000.0)
+
+        if self.vmax is not None:
+            s += "vmax: {:.3f} V\n".format(self.vmax / 1000.0)
 
         if self.i is not None:
             s += "i: {:.2f} A\n".format(self.i / 1000.0)
@@ -276,6 +284,8 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
         status = None
         flags = None
         v = None
+        vmin = None
+        vmax = None
         i = None
 
         # Iterate over all lines of text
@@ -285,7 +295,7 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
                 raise IndexError("configuration index out of range")
             # If there is no configuration, return an empty SinkConfig
             elif line.startswith(b"No configuration"):
-                return cls(None, None, None, None)
+                return cls(None, None, None, None, None, None)
             # If this line is the status field
             elif line.startswith(b"status: "):
                 line = line.split()[1:]
@@ -305,17 +315,27 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v i")):
                         break
                     elif word == b"GiveBack":
                         flags |= SinkFlags.GIVEBACK
+                    elif word == b"HV_Preferred":
+                        flags |= SinkFlags.HV_PREFERRED
             # If this line is the v field
             elif line.startswith(b"v: "):
                 word = line.split()[1]
                 v = round(1000*float(word))
+            # If this line is the vmin field
+            elif line.startswith(b"vmin: "):
+                word = line.split()[1]
+                vmin = round(1000*float(word))
+            # If this line is the vmax field
+            elif line.startswith(b"vmax: "):
+                word = line.split()[1]
+                vmax = round(1000*float(word))
             # If this line is the i field
             elif line.startswith(b"i: "):
                 word = line.split()[1]
                 i = round(1000*float(word))
 
         # Create a new SinkConfig object with the values we just read
-        return cls(status=status, flags=flags, v=v, i=i)
+        return cls(status=status, flags=flags, v=v, vmin=vmin, vmax=vmax, i=i)
 
 
 class SinkStatus(enum.Enum):
@@ -329,6 +349,7 @@ class SinkFlags(enum.Flag):
     """Flags field of a PD Buddy Sink configuration object"""
     NONE = 0
     GIVEBACK = enum.auto()
+    HV_PREFERRED = enum.auto()
 
 
 class UnknownPDO(namedtuple("UnknownPDO", "value")):

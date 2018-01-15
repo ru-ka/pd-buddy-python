@@ -17,23 +17,31 @@ class SinkTestCase(unittest.TestCase):
         self.pdbs = pdbuddy.Sink(pdbs_devices[0])
 
         self.obj_valid = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=15000, i=3000)
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=3000)
         self.obj_valid_gb = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, i=3000)
+                flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, vmin=None,
+                vmax=None, i=3000)
 
         self.obj_huge_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=65536, i=1000)
+                flags=pdbuddy.SinkFlags.NONE, v=65536, vmin=None, vmax=None,
+                i=1000)
         self.obj_big_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=21001, i=1000)
+                flags=pdbuddy.SinkFlags.NONE, v=21001, vmin=None, vmax=None,
+                i=1000)
         self.obj_neg_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=-1, i=1000)
+                flags=pdbuddy.SinkFlags.NONE, v=-1, vmin=None, vmax=None,
+                i=1000)
 
         self.obj_huge_i = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=5000, i=65536)
+                flags=pdbuddy.SinkFlags.NONE, v=5000, vmin=None, vmax=None,
+                i=65536)
         self.obj_big_i = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=5000, i=5001)
+                flags=pdbuddy.SinkFlags.NONE, v=5000, vmin=None, vmax=None,
+                i=5001)
         self.obj_neg_i = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=5000, i=-1)
+                flags=pdbuddy.SinkFlags.NONE, v=5000, vmin=None, vmax=None,
+                i=-1)
 
     def tearDown(self):
         # Close the connection to the PD Buddy Sink
@@ -145,19 +153,30 @@ class SinkConfigTestCase(unittest.TestCase):
 
     def setUp(self):
         self.obj_none = pdbuddy.SinkConfig(status=None, flags=None, v=None,
-                i=None)
+                vmin=None, vmax=None, i=None)
         self.obj_empty = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.EMPTY,
-                flags=None, v=None, i=None)
+                flags=None, v=None, vmin=None, vmax=None, i=None)
         self.obj_valid = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=15000, i=3000)
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=3000)
         self.obj_invalid = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.INVALID,
-                flags=pdbuddy.SinkFlags.NONE, v=15000, i=3000)
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=3000)
         self.obj_valid_gb = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, i=3000)
+                flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, vmin=None,
+                vmax=None, i=3000)
         self.obj_valid_5v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=5000, i=3000)
+                flags=pdbuddy.SinkFlags.NONE, v=5000, vmin=None, vmax=None,
+                i=3000)
         self.obj_valid_1a = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-                flags=pdbuddy.SinkFlags.NONE, v=15000, i=1000)
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=1000)
+        self.obj_valid_range = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=12000, vmax=16000,
+                i=1000)
+        self.obj_valid_hv = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.HV_PREFERRED, v=15000, vmin=12000,
+                vmax=16000, i=1000)
 
     def test_str_none(self):
         self.assertEqual(str(self.obj_none), "No configuration")
@@ -167,23 +186,33 @@ class SinkConfigTestCase(unittest.TestCase):
 
     def test_str_valid(self):
         self.assertEqual(str(self.obj_valid),
-                "status: valid\nflags: (none)\nv: 15.00 V\ni: 3.00 A")
+                "status: valid\nflags: (none)\nv: 15.000 V\ni: 3.00 A")
 
     def test_str_invalid(self):
         self.assertEqual(str(self.obj_invalid),
-                "status: invalid\nflags: (none)\nv: 15.00 V\ni: 3.00 A")
+                "status: invalid\nflags: (none)\nv: 15.000 V\ni: 3.00 A")
 
     def test_str_valid_gb(self):
         self.assertEqual(str(self.obj_valid_gb),
-                "status: valid\nflags: GiveBack\nv: 15.00 V\ni: 3.00 A")
+                "status: valid\nflags: GiveBack\nv: 15.000 V\ni: 3.00 A")
 
     def test_str_valid_5v(self):
         self.assertEqual(str(self.obj_valid_5v),
-                "status: valid\nflags: (none)\nv: 5.00 V\ni: 3.00 A")
+                "status: valid\nflags: (none)\nv: 5.000 V\ni: 3.00 A")
 
     def test_str_valid_1a(self):
         self.assertEqual(str(self.obj_valid_1a),
-                "status: valid\nflags: (none)\nv: 15.00 V\ni: 1.00 A")
+                "status: valid\nflags: (none)\nv: 15.000 V\ni: 1.00 A")
+
+    def test_str_valid_range(self):
+        self.assertEqual(str(self.obj_valid_range),
+                "status: valid\nflags: (none)\nv: 15.000 V\nvmin: 12.000 V\n"
+                "vmax: 16.000 V\ni: 1.00 A")
+
+    def test_str_valid_hv(self):
+        self.assertEqual(str(self.obj_valid_hv),
+                "status: valid\nflags: HV_Preferred\nv: 15.000 V\n"
+                "vmin: 12.000 V\nvmax: 16.000 V\ni: 1.00 A")
 
     def test_from_text_none(self):
         ft_none = pdbuddy.SinkConfig.from_text([])
@@ -196,37 +225,55 @@ class SinkConfigTestCase(unittest.TestCase):
     def test_from_text_valid(self):
         ft_valid = pdbuddy.SinkConfig.from_text([b"status: valid",
                 b"flags: (none)",
-                b"v: 15.00 V",
+                b"v: 15.000 V",
                 b"i: 3.00 A"])
         self.assertEqual(ft_valid, self.obj_valid)
 
     def test_from_text_invalid(self):
         ft_invalid = pdbuddy.SinkConfig.from_text([b"status: invalid",
                 b"flags: (none)",
-                b"v: 15.00 V",
+                b"v: 15.000 V",
                 b"i: 3.00 A"])
         self.assertEqual(ft_invalid, self.obj_invalid)
 
     def test_from_text_valid_gb(self):
         ft_valid_gb = pdbuddy.SinkConfig.from_text([b"status: valid",
                 b"flags: GiveBack",
-                b"v: 15.00 V",
+                b"v: 15.000 V",
                 b"i: 3.00 A"])
         self.assertEqual(ft_valid_gb, self.obj_valid_gb)
 
     def test_from_text_valid_5v(self):
         ft_valid_5v = pdbuddy.SinkConfig.from_text([b"status: valid",
                 b"flags: (none)",
-                b"v: 5.00 V",
+                b"v: 5.000 V",
                 b"i: 3.00 A"])
         self.assertEqual(ft_valid_5v, self.obj_valid_5v)
 
     def test_from_text_valid_1a(self):
         ft_valid_1a = pdbuddy.SinkConfig.from_text([b"status: valid",
                 b"flags: (none)",
-                b"v: 15.00 V",
+                b"v: 15.000 V",
                 b"i: 1.00 A"])
         self.assertEqual(ft_valid_1a, self.obj_valid_1a)
+
+    def test_from_text_valid_range(self):
+        ft_valid_range = pdbuddy.SinkConfig.from_text([b"status: valid",
+                b"flags: (none)",
+                b"v: 15.000 V",
+                b"vmin: 12.000 V",
+                b"vmax: 16.000 V",
+                b"i: 1.00 A"])
+        self.assertEqual(ft_valid_range, self.obj_valid_range)
+
+    def test_from_text_valid_hv(self):
+        ft_valid_hv = pdbuddy.SinkConfig.from_text([b"status: valid",
+                b"flags: HV_Preferred",
+                b"v: 15.000 V",
+                b"vmin: 12.000 V",
+                b"vmax: 16.000 V",
+                b"i: 1.00 A"])
+        self.assertEqual(ft_valid_hv, self.obj_valid_hv)
 
     def test_from_text_invalid_index(self):
         with self.assertRaises(IndexError):
@@ -240,7 +287,7 @@ class SinkConfigTestCase(unittest.TestCase):
         ft_valid = pdbuddy.SinkConfig.from_text([b"status: valid",
                 b"flags: (none)",
                 b"This is an extra line, which shouldn't hurt anything.",
-                b"v: 15.00 V",
+                b"v: 15.000 V",
                 b"i: 3.00 A"])
         self.assertEqual(ft_valid, self.obj_valid)
 
