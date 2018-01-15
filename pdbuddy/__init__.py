@@ -88,6 +88,12 @@ class Sink:
         """Returns the license text from the PD Buddy Sink"""
         return self.send_command("license")
 
+    def boot(self):
+        """Runs the PD Buddy Sink's DFU bootloader and closes the serial port"""
+        self._port.write(b"boot\r\n")
+        self._port.flush()
+        self.close()
+
     def erase(self):
         """Synchronously erases all stored configuration from flash"""
         self.send_command("erase")
