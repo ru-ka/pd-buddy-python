@@ -238,13 +238,14 @@ class Sink:
             cls.pid))
 
 
-class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i")):
+class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i idim")):
     """Python representation of a PD Buddy Sink configuration object
 
     ``status`` should be a `SinkStatus` object.  ``flags`` should be zero or
     more `SinkFlags` values.  ``v``, ``vmin``, and ``vmax`` are voltages in
-    millivolts, and ``i`` is the current in milliamperes.  `None` is also an
-    acceptible value for any of the fields.
+    millivolts, ``i`` is the value used to set current in the appropriate
+    milli- SI unit, and ``idim`` is the dimension of ``i``.  `None` is also
+    an acceptible value for any of the fields.
     """
     __slots__ = ()
 
@@ -283,7 +284,12 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i")):
             s += "vmax: {:.3f} V\n".format(self.vmax / 1000.0)
 
         if self.i is not None:
-            s += "i: {:.2f} A\n".format(self.i / 1000.0)
+            if self.idim is SinkDimension.CURRENT:
+                s += "i: {:.2f} A\n".format(self.i / 1000.0)
+            if self.idim is SinkDimension.POWER:
+                s += "p: {:.2f} W\n".format(self.i / 1000.0)
+            if self.idim is SinkDimension.RESISTANCE:
+                s += "r: {:.2f} \u03A9\n".format(self.i / 1000.0)
 
         # Return all but the last character of s to remove the trailing newline
         if s:
@@ -308,6 +314,7 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i")):
         vmin = None
         vmax = None
         i = None
+        idim = None
 
         # Iterate over all lines of text
         for line in text:
@@ -316,7 +323,7 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i")):
                 raise IndexError("configuration index out of range")
             # If there is no configuration, return an empty SinkConfig
             elif line.startswith(b"No configuration"):
-                return cls(None, None, None, None, None, None)
+                return cls(None, None, None, None, None, None, None)
             # If this line is the status field
             elif line.startswith(b"status: "):
                 line = line.split()[1:]
@@ -354,9 +361,21 @@ class SinkConfig(namedtuple("SinkConfig", "status flags v vmin vmax i")):
             elif line.startswith(b"i: "):
                 word = line.split()[1]
                 i = round(1000*float(word))
+                idim = SinkDimension.CURRENT
+            # If this line is the p field
+            elif line.startswith(b"p: "):
+                word = line.split()[1]
+                i = round(1000*float(word))
+                idim = SinkDimension.POWER
+            # If this line is the r field
+            elif line.startswith(b"r: "):
+                word = line.split()[1]
+                i = round(1000*float(word))
+                idim = SinkDimension.RESISTANCE
 
         # Create a new SinkConfig object with the values we just read
-        return cls(status=status, flags=flags, v=v, vmin=vmin, vmax=vmax, i=i)
+        return cls(status=status, flags=flags, v=v, vmin=vmin, vmax=vmax, i=i,
+                idim=idim)
 
 
 class SinkStatus(enum.Enum):
@@ -364,6 +383,13 @@ class SinkStatus(enum.Enum):
     EMPTY = 1
     VALID = 2
     INVALID = 3
+
+
+class SinkDimension(enum.Enum):
+    """Dimension of the value used to set the current requested"""
+    CURRENT = 1
+    POWER = 2
+    RESISTANCE = 3
 
 
 class SinkFlags(enum.Flag):
