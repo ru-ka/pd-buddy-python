@@ -142,9 +142,25 @@ class Sink:
         """Toggles the GiveBack flag in the configuration buffer"""
         self.send_command("toggle_giveback")
 
+    def toggle_hv_preferred(self):
+        """Toggles the HV_Preferred flag in the configuration buffer"""
+        self.send_command("toggle_hv_preferred")
+
     def set_v(self, mv):
         """Sets the voltage of the configuration buffer, in millivolts"""
         out = self.send_command("set_v {}".format(mv))
+        # If that command gave any output, that indicates an error.  Raise an
+        # exception to make that clear.
+        if len(out):
+            raise ValueError(out[0])
+
+    def set_vrange(self, vmin, vmax):
+        """Sets the min and max voltage of the configuration buffer, in millivolts"""
+        # First, make sure we're sending numbers to the Sink in all valid cases
+        if vmin is None and vmax is None:
+            vmin = 0
+            vmax = 0
+        out = self.send_command("set_vrange {} {}".format(vmin, vmax))
         # If that command gave any output, that indicates an error.  Raise an
         # exception to make that clear.
         if len(out):
@@ -200,9 +216,14 @@ class Sink:
         self.clear_flags()
         if sc.flags & SinkFlags.GIVEBACK:
             self.toggle_giveback()
+        if sc.flags & SinkFlags.HV_PREFERRED:
+            self.toggle_hv_preferred()
 
         # Set voltage
         self.set_v(sc.v)
+
+        # Set voltage range
+        self.set_vrange(sc.vmin, sc.vmax)
         
         # Set current
         self.set_i(sc.i)

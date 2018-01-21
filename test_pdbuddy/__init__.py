@@ -22,6 +22,9 @@ class SinkTestCase(unittest.TestCase):
         self.obj_valid_gb = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.GIVEBACK, v=15000, vmin=None,
                 vmax=None, i=3000)
+        self.obj_range = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.HV_PREFERRED, v=13800, vmin=12000,
+                vmax=16000, i=2000)
 
         self.obj_huge_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=65536, vmin=None, vmax=None,
@@ -32,6 +35,10 @@ class SinkTestCase(unittest.TestCase):
         self.obj_neg_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=-1, vmin=None, vmax=None,
                 i=1000)
+
+        self.obj_inv_range = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.HV_PREFERRED, v=13800, vmin=16000,
+                vmax=12000, i=2000)
 
         self.obj_huge_i = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=5000, vmin=None, vmax=None,
@@ -68,6 +75,10 @@ class SinkTestCase(unittest.TestCase):
         self.pdbs.set_tmpcfg(self.obj_valid_gb)
         self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_valid_gb)
 
+    def test_set_tmpcfg_range(self):
+        self.pdbs.set_tmpcfg(self.obj_range)
+        self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_range)
+
     def test_set_tmpcfg_huge_v(self):
         with self.assertRaises(ValueError):
             self.pdbs.set_tmpcfg(self.obj_huge_v)
@@ -79,6 +90,10 @@ class SinkTestCase(unittest.TestCase):
     def test_set_tmpcfg_neg_v(self):
         with self.assertRaises(ValueError):
             self.pdbs.set_tmpcfg(self.obj_neg_v)
+
+    def test_set_tmpcfg_inv_range(self):
+        with self.assertRaises(ValueError):
+            self.pdbs.set_tmpcfg(self.obj_inv_range)
 
     def test_set_tmpcfg_huge_i(self):
         with self.assertRaises(ValueError):
