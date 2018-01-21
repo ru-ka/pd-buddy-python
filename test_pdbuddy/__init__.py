@@ -397,6 +397,16 @@ class SrcFixedPDOTestCase(unittest.TestCase):
                 "fixed\n\tv: 5.00 V\n\ti: 1.50 A")
 
 
+class SourcePPSAPDOTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.obj_15v = pdbuddy.SourcePPSAPDO(3000, 16000, 3000)
+
+    def test_str_15v(self):
+        self.assertEqual(str(self.obj_15v), "pps\n\tvmin: 3.00 V\n"
+                "\tvmax: 16.00 V\n\ti: 3.00 A")
+
+
 class TypeCVirtualPDOTestCase(unittest.TestCase):
 
     def setUp(self):

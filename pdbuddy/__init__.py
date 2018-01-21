@@ -240,7 +240,7 @@ class Sink:
 
         # Set voltage range
         self.set_vrange(sc.vmin, sc.vmax)
-        
+
         if sc.idim is SinkDimension.CURRENT:
             # Set current
             self.set_i(sc.i)
@@ -483,6 +483,27 @@ class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
         return s
 
 
+class SourcePPSAPDO(namedtuple("SourcePPSAPDO", "vmin vmax i")):
+    """A Source Programmable Power Supply APDO
+
+    ``vmin`` and ``vmax`` are the minimum and maximum voltage in millivolts,
+    respectively, and ``i`` is the maximum current in milliamperes.
+    """
+    __slots__ = ()
+
+    pdo_type = "pps"
+
+    def __str__(self):
+        """Print the SourcePPSAPDO in the manner of the configuration shell"""
+        s = self.pdo_type + "\n"
+
+        s += "\tvmin: {:.2f} V\n".format(self.vmin / 1000.0)
+        s += "\tvmax: {:.2f} V\n".format(self.vmax / 1000.0)
+        s += "\ti: {:.2f} A".format(self.i / 1000.0)
+
+        return s
+
+
 class TypeCVirtualPDO(namedtuple("TypeCVirtualPDO", "i")):
     """A Type-C Current Virtual PDO
 
@@ -551,6 +572,21 @@ def read_pdo(text):
                 peak_i=peak_i,
                 v=v,
                 i=i)
+    elif pdo_type == SourcePPSAPDO.pdo_type:
+        # Load a SourcePPSAPDO
+        for line in text[1:]:
+            fields = line.split(b":")
+            fields[0] = fields[0].strip()
+            fields[1] = fields[1].strip()
+            if fields[0] == b"vmin":
+                vmin = round(1000*float(fields[1].split()[0]))
+            if fields[0] == b"vmax":
+                vmax = round(1000*float(fields[1].split()[0]))
+            if fields[0] == b"i":
+                i = round(1000*float(fields[1].split()[0]))
+
+        # Make the SourcePPSAPDO
+        return SourcePPSAPDO(vmin=vmin, vmax=vmax, i=i)
     elif pdo_type == TypeCVirtualPDO.pdo_type:
         # Load a TypeCVirtualPDO
         for line in text[1:]:
