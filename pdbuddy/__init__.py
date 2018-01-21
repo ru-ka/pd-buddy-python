@@ -174,6 +174,22 @@ class Sink:
         if len(out):
             raise ValueError(out[0])
 
+    def set_p(self, mw):
+        """Sets the power of the configuration buffer, in milliwatts"""
+        out = self.send_command("set_p {}".format(mw))
+        # If that command gave any output, that indicates an error.  Raise an
+        # exception to make that clear.
+        if len(out):
+            raise ValueError(out[0])
+
+    def set_r(self, mr):
+        """Sets the resistance of the configuration buffer, in milliohms"""
+        out = self.send_command("set_r {}".format(mr))
+        # If that command gave any output, that indicates an error.  Raise an
+        # exception to make that clear.
+        if len(out):
+            raise ValueError(out[0])
+
     def identify(self):
         """Blinks the LED quickly"""
         self.send_command("identify")
@@ -225,8 +241,15 @@ class Sink:
         # Set voltage range
         self.set_vrange(sc.vmin, sc.vmax)
         
-        # Set current
-        self.set_i(sc.i)
+        if sc.idim is SinkDimension.CURRENT:
+            # Set current
+            self.set_i(sc.i)
+        elif sc.idim is SinkDimension.POWER:
+            # Set power
+            self.set_p(sc.i)
+        elif sc.idim is SinkDimension.RESISTANCE:
+            # Set resistance
+            self.set_r(sc.i)
 
     @classmethod
     def get_devices(cls):

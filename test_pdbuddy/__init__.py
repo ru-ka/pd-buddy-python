@@ -25,6 +25,12 @@ class SinkTestCase(unittest.TestCase):
         self.obj_range = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.HV_PREFERRED, v=13800, vmin=12000,
                 vmax=16000, i=2000, idim=pdbuddy.SinkDimension.CURRENT)
+        self.obj_valid_p = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=35000, idim=pdbuddy.SinkDimension.POWER)
+        self.obj_valid_r = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=10000, idim=pdbuddy.SinkDimension.RESISTANCE)
 
         self.obj_huge_v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=65536, vmin=None, vmax=None,
@@ -49,6 +55,13 @@ class SinkTestCase(unittest.TestCase):
         self.obj_neg_i = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
                 flags=pdbuddy.SinkFlags.NONE, v=5000, vmin=None, vmax=None,
                 i=-1, idim=pdbuddy.SinkDimension.CURRENT)
+
+        self.obj_neg_p = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=-1, idim=pdbuddy.SinkDimension.POWER)
+        self.obj_neg_r = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
+                flags=pdbuddy.SinkFlags.NONE, v=15000, vmin=None, vmax=None,
+                i=-1, idim=pdbuddy.SinkDimension.RESISTANCE)
 
     def tearDown(self):
         # Close the connection to the PD Buddy Sink
@@ -79,6 +92,14 @@ class SinkTestCase(unittest.TestCase):
         self.pdbs.set_tmpcfg(self.obj_range)
         self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_range)
 
+    def test_set_tmpcfg_valid_p(self):
+        self.pdbs.set_tmpcfg(self.obj_valid_p)
+        self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_valid_p)
+
+    def test_set_tmpcfg_valid_r(self):
+        self.pdbs.set_tmpcfg(self.obj_valid_r)
+        self.assertEqual(self.pdbs.get_tmpcfg(), self.obj_valid_r)
+
     def test_set_tmpcfg_huge_v(self):
         with self.assertRaises(ValueError):
             self.pdbs.set_tmpcfg(self.obj_huge_v)
@@ -106,6 +127,14 @@ class SinkTestCase(unittest.TestCase):
     def test_set_tmpcfg_neg_i(self):
         with self.assertRaises(ValueError):
             self.pdbs.set_tmpcfg(self.obj_neg_i)
+
+    def test_set_tmpcfg_neg_p(self):
+        with self.assertRaises(ValueError):
+            self.pdbs.set_tmpcfg(self.obj_neg_p)
+
+    def test_set_tmpcfg_neg_r(self):
+        with self.assertRaises(ValueError):
+            self.pdbs.set_tmpcfg(self.obj_neg_r)
 
     def test_write(self):
         self.test_set_tmpcfg_valid()
