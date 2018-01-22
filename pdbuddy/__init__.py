@@ -483,7 +483,7 @@ class SrcFixedPDO(namedtuple("SrcFixedPDO", "dual_role_pwr usb_suspend "
         return s
 
 
-class SourcePPSAPDO(namedtuple("SourcePPSAPDO", "vmin vmax i")):
+class SrcPPSAPDO(namedtuple("SrcPPSAPDO", "vmin vmax i")):
     """A Source Programmable Power Supply APDO
 
     ``vmin`` and ``vmax`` are the minimum and maximum voltage in millivolts,
@@ -494,7 +494,7 @@ class SourcePPSAPDO(namedtuple("SourcePPSAPDO", "vmin vmax i")):
     pdo_type = "pps"
 
     def __str__(self):
-        """Print the SourcePPSAPDO in the manner of the configuration shell"""
+        """Print the SrcPPSAPDO in the manner of the configuration shell"""
         s = self.pdo_type + "\n"
 
         s += "\tvmin: {:.2f} V\n".format(self.vmin / 1000.0)
@@ -572,8 +572,8 @@ def read_pdo(text):
                 peak_i=peak_i,
                 v=v,
                 i=i)
-    elif pdo_type == SourcePPSAPDO.pdo_type:
-        # Load a SourcePPSAPDO
+    elif pdo_type == SrcPPSAPDO.pdo_type:
+        # Load a SrcPPSAPDO
         for line in text[1:]:
             fields = line.split(b":")
             fields[0] = fields[0].strip()
@@ -585,8 +585,8 @@ def read_pdo(text):
             if fields[0] == b"i":
                 i = round(1000*float(fields[1].split()[0]))
 
-        # Make the SourcePPSAPDO
-        return SourcePPSAPDO(vmin=vmin, vmax=vmax, i=i)
+        # Make the SrcPPSAPDO
+        return SrcPPSAPDO(vmin=vmin, vmax=vmax, i=i)
     elif pdo_type == TypeCVirtualPDO.pdo_type:
         # Load a TypeCVirtualPDO
         for line in text[1:]:
@@ -646,7 +646,7 @@ def calculate_pdp(pdo_list):
 
 
 def follows_power_rules(pdo_list):
-    """Test whether a list of PDOs follows the Power Rules for PD 2.0
+    """Test whether a list of PDOs follows the Power Rules for PD 3.0
 
     This function is a false-biased approximation; that is, when it returns
     False it is definitely correct, but when it returns True it might be
@@ -662,12 +662,35 @@ def follows_power_rules(pdo_list):
     if pdo_list and pdo_list[0].pdo_type == "typec_virtual":
         return True
 
+    fixed = [p for p in pdo_list if p.pdo_type == "fixed"]
+    pps = [p for p in pdo_list if p.pdo_type == "pps"]
+
     # Make sure nothing exceeds the PDP
-    for pdo in pdo_list:
-        if pdo.pdo_type == "fixed":
-            if pdp < pdo.v / 1000.0 * pdo.i / 1000.0:
+    for pdo in fixed:
+        if pdp < pdo.v / 1000.0 * pdo.i / 1000.0:
+            return False
+    # TODO: in the future, there will be more types of PDO checked here
+    for pdo in pps:
+        # 5V Prog nominal PDO
+        if pdo.vmin == 3000 and pdo.vmax == 5900:
+            if pdp < 5.0 * pdo.i / 1000.0:
                 return False
-        # TODO: in the future, there will be more types of PDO checked here
+        # 9V Prog nominal PDO
+        elif pdo.vmin == 3000 and pdo.vmax == 11000:
+            if pdp < 9.0 * pdo.i / 1000.0:
+                return False
+        # 15V Prog nominal PDO
+        elif pdo.vmin == 3000 and pdo.vmax == 16000:
+            if pdp < 15.0 * pdo.i / 1000.0:
+                return False
+        # 20V Prog nominal PDO
+        elif pdo.vmin == 3000 and pdo.vmax == 21000:
+            if pdp < 20.0 * pdo.i / 1000.0:
+                return False
+        # Non-standard programmable PDO
+        else:
+            if pdp < pdo.vmax / 1000.0 * pdo.i / 1000.0:
+                return False
 
     # Check that the fixed supply PDOs look right
     seen_5v = False
@@ -680,8 +703,8 @@ def follows_power_rules(pdo_list):
         seen_normative_voltages = True
     elif pdp <= 15:
         # Below 15 W, make sure the PDP is available at 5 V.
-        for pdo in pdo_list:
-            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+        for pdo in fixed:
+            if pdo.v == 5000:
                 seen_5v = True
                 if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
                     return False
@@ -689,12 +712,12 @@ def follows_power_rules(pdo_list):
     elif pdp <= 27:
         # Between 15 and 27 W, make sure at least 3 A is available at 5 V and
         # the PDP is available at 9 V.
-        for pdo in pdo_list:
-            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+        for pdo in fixed:
+            if pdo.v == 5000:
                 seen_5v = True
                 if pdo.i < 3000.0:
                     return False
-            elif pdo.pdo_type == "fixed" and pdo.v == 9000:
+            elif pdo.v == 9000:
                 seen_9v = True
                 if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
                     return False
@@ -702,16 +725,16 @@ def follows_power_rules(pdo_list):
     elif pdp <= 45:
         # Between 27 and 45 W, make sure at least 3 A is available at 5 and
         # 9 V, and the PDP is available at 15 V.
-        for pdo in pdo_list:
-            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+        for pdo in fixed:
+            if pdo.v == 5000:
                 seen_5v = True
                 if pdo.i < 3000.0:
                     return False
-            elif pdo.pdo_type == "fixed" and pdo.v == 9000:
+            elif pdo.v == 9000:
                 seen_9v = True
                 if pdo.i < 3000.0:
                     return False
-            elif pdo.pdo_type == "fixed" and pdo.v == 15000:
+            elif pdo.v == 15000:
                 seen_15v = True
                 if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
                     return False
@@ -719,20 +742,20 @@ def follows_power_rules(pdo_list):
     else:
         # Above 45 W, make sure at least 3 A is available at 5, 9, and 15 V,
         # and the PDP is available at 20 V.
-        for pdo in pdo_list:
-            if pdo.pdo_type == "fixed" and pdo.v == 5000:
+        for pdo in fixed:
+            if pdo.v == 5000:
                 seen_5v = True
                 if pdo.i < 3000.0:
                     return False
-            elif pdo.pdo_type == "fixed" and pdo.v == 9000:
+            elif pdo.v == 9000:
                 seen_9v = True
                 if pdo.i < 3000.0:
                     return False
-            elif pdo.pdo_type == "fixed" and pdo.v == 15000:
+            elif pdo.v == 15000:
                 seen_15v = True
                 if pdo.i < 3000.0:
                     return False
-            elif pdo.pdo_type == "fixed" and pdo.v == 20000:
+            elif pdo.v == 20000:
                 seen_20v = True
                 if pdo.v / 1000.0 * pdo.i / 1000.0 != pdp:
                     return False
@@ -743,5 +766,77 @@ def follows_power_rules(pdo_list):
 
     # TODO: there are several things this currently doesn't test, such as
     # variable and battery PDOs.
+
+    # Check that the PPS APDOs look right
+    seen_5v = False
+    seen_9v = False
+    seen_15v = False
+    seen_20v = False
+
+    if pdp == 0:
+        # No power is fine
+        pass
+    elif pdp <= 15:
+        # Below 15 W, make sure the PDP is available with 5V Prog.
+        for pdo in pps:
+            if pdo.vmin == 3000 and pdo.vmax == 5900:
+                seen_5v = True
+                if 5.0 * pdo.i / 1000.0 != pdp:
+                    return False
+        if pps and not seen_5v:
+            return False
+    elif pdp <= 27:
+        # Between 15 and 27 W, make sure at least 3 A is available at 5V Prog
+        # and the PDP is available at 9V Prog.
+        for pdo in pps:
+            if pdo.vmin == 3000 and pdo.vmax == 5900:
+                seen_5v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.vmin == 3000 and pdo.vmax == 11000:
+                seen_9v = True
+                if 9.0 * pdo.i / 1000.0 != pdp:
+                    return False
+                # If we're at full power for this range, 5V Prog is optional
+                if pdp == 27:
+                    seen_5v = True
+        if pps and not (seen_5v and seen_9v):
+            return False
+    elif pdp <= 45:
+        # Between 27 and 45 W, make sure at least 3 A is available at 9V Prog,
+        # and the PDP is available at 15V Prog.
+        for pdo in pps:
+            # 5V Prog is optional at this power level
+            if pdo.vmin == 3000 and pdo.vmax == 11000:
+                seen_9v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.vmin == 3000 and pdo.vmax == 16000:
+                seen_15v = True
+                if 15.0 * pdo.i / 1000.0 != pdp:
+                    return False
+                # If we're at full power for this range, 9V Prog is optional
+                if pdp == 45:
+                    seen_9v = True
+        if pps and not (seen_9v and seen_15v):
+            return False
+    else:
+        # Above 45 W, make sure at least 3 A is available at 15V Prog, and the
+        # PDP is available at 20V Prog.
+        for pdo in pps:
+            # 5V and 9V Prog are optional at this power level
+            if pdo.vmin == 3000 and pdo.vmax == 16000:
+                seen_15v = True
+                if pdo.i < 3000.0:
+                    return False
+            elif pdo.vmin == 3000 and pdo.vmax == 21000:
+                seen_20v = True
+                if 20.0 * pdo.i / 1000.0 != pdp:
+                    return False
+                # If we have at least 60 W, 15V Prog is optional
+                if pdp >= 60:
+                    seen_15v = True
+        if pps and not (seen_15v and seen_20v):
+            return False
 
     return True
