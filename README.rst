@@ -13,6 +13,8 @@ Features
    device with one method call
 -  Allows control of whether or not the output is enabled
 -  Provides a Pythonic interface for reading advertised PDOs
+-  Provides functions for testing if the power supply follows the Power Rules
+-  Includes a script for testing if a PD Buddy Sink is correctly functioning
 
 Examples
 --------
@@ -25,11 +27,11 @@ Open the first PD Buddy Sink device and read its configuration
     >>> import pdbuddy
     >>> pdbs = pdbuddy.Sink(list(pdbuddy.Sink.get_devices())[0])
     >>> pdbs.get_cfg()
-    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.NONE: 0>, v=5000, i=3000)
+    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.NONE: 0>, v=5000, vmin=None, vmax=None, i=3000, idim=<SinkDimension.CURRENT: 1>)
     >>> print(pdbs.get_cfg())
     status: valid
     flags: (none)
-    v: 5.00 V
+    v: 5.000 V
     i: 3.00 A
 
 Locally manipulate a SinkConfig object
@@ -41,7 +43,7 @@ Locally manipulate a SinkConfig object
     >>> cfg = cfg._replace(v=20000, i=2250)
     >>> cfg = cfg._replace(flags=cfg.flags | pdbuddy.SinkFlags.GIVEBACK)
     >>> cfg
-    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.GIVEBACK: 1>, v=20000, i=2250)
+    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.GIVEBACK: 1>, v=20000, vmin=None, vmax=None, i=2250, idim=<SinkDimension.CURRENT: 1>)
 
 Write the SinkConfig object to flash
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,7 +53,7 @@ Write the SinkConfig object to flash
     >>> pdbs.set_tmpcfg(cfg)
     >>> pdbs.write()
     >>> pdbs.get_cfg()
-    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.GIVEBACK: 1>, v=20000, i=2250)
+    SinkConfig(status=<SinkStatus.VALID: 2>, flags=<SinkFlags.GIVEBACK: 1>, v=20000, vmin=None, vmax=None, i=2250, idim=<SinkDimension.CURRENT: 1>)
 
 Requirements
 ------------

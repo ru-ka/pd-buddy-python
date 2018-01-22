@@ -5,17 +5,17 @@ with open("README.rst") as file:
 
 setup(
     name = "pd-buddy-python",
-    version = "0.4.2",
+    version = "0.5.0",
     author = "Clayton G. Hobbs",
     author_email = "clay@lakeserv.net",
     description = ("Python library for configuring PD Buddy Sink devices"),
     license = "GPLv3+",
     keywords = "usb serial pd-buddy configuration",
     url = "https://git.clayhobbs.com/pd-buddy/pd-buddy-python",
-    packages = ['pdbuddy'],
+    packages = ['pdbuddy', 'pdbuddy.tools'],
     long_description = long_description,
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU General Public License v3 or later "
             "(GPLv3+)",
