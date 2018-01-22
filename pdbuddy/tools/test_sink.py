@@ -63,9 +63,11 @@ def main():
 
     # Define configurations for testing
     cfg_20v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-            flags=pdbuddy.SinkFlags.NONE, v=20000, i=1000)
+            flags=pdbuddy.SinkFlags.NONE, v=20000, vmin=None, vmax=None,
+            i=1000, idim=pdbuddy.SinkDimension.CURRENT)
     cfg_9v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
-            flags=pdbuddy.SinkFlags.NONE, v=9000, i=1000)
+            flags=pdbuddy.SinkFlags.NONE, v=9000, vmin=None, vmax=None, i=1000,
+            idim=pdbuddy.SinkDimension.CURRENT)
 
     # Run the testing procedure
     with pdbuddy.Sink(args.tty) as sink:
