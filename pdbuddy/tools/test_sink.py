@@ -57,9 +57,18 @@ def main():
                     sinkinfo.product, sinkinfo.serial_number)
         sys.exit(0)
 
-    # If there's no device file specified, complain and exit
+    # If there's no device file specified, try to auto-detect
     if not args.tty:
-        parser.error('the following arguments are required: tty')
+        devices = list(pdbuddy.Sink.get_devices())
+        # If the wrong number of devices is present, complain and exit.
+        if len(devices) < 1:
+            print('No PD Buddy Sink devices found')
+            sys.exit(1)
+        elif len(devices) > 1:
+            print('Multiple PD Buddy Sink devices found')
+            sys.exit(1)
+        # Set args.tty to the auto-detected Sink
+        args.tty = devices[0].device
 
     # Define configurations for testing
     cfg_20v = pdbuddy.SinkConfig(status=pdbuddy.SinkStatus.VALID,
